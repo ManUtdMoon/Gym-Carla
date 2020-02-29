@@ -101,10 +101,31 @@ class CarlaEnv(gym.Env):
 		self.world.set_weather(carla.WeatherParameters.ClearNoon)
 
         # Get spawn points
+		self.vehicle_spawn_points = list(self.world.get_map().get_spawn_points())
+		self.walker_spawn_points = []
+		for i in range(self.number_of_walkers):
+			spawn_point = carla.Transform()
+			loc = self.world.get_random_location_from_navigation()
+			if (loc != None):
+				spawn_point.location = loc
+				self.walker_spawn_points.append(spawn_point)
 
         # Create the ego vehicle blueprint
 		self.ego_bp = self._create_vehicle_bluepprint(params['ego_vehicle_filter'], color='49,8,8')
 
+        # Add camera sensor
+        # TODO:
+
+        # Set fixed simulation step for synchronous mode
+		self.settings = self.world.get_settings()
+		self.settings.fixed_delta_seconds = self.dt
+
+        # Record the time of total steps and resetting steps
+		self.reset_step = 0
+		self.total_step = 0
+
+        # Initialize the render
+        
 
     def step(self, action):
         pass
@@ -127,5 +148,34 @@ class CarlaEnv(gym.Env):
 		Returns:
 			bp: the blueprint object of carla.
 		"""
-        
-        pass
+        blueprints = self.world.get_blueprint_library().filter(actor_filter)
+		blueprint_library = []
+		for nw in number_of_wheels:
+			blueprint_library = blueprint_library + [x for x in blueprints if int(x.get_attribute('number_of_wheels')) == nw]
+		bp = random.choice(blueprint_library)
+		if bp.has_attribute('color'):
+			if not color:
+				color = random.choice(bp.get_attribute('color').recommended_values)
+			bp.set_attribute('color', color)
+		return bp
+    
+    def _set_carla_transform(self, pose):
+		"""Get a carla tranform object given pose.
+
+		Args:
+			pose: [x, y, yaw].
+
+		Returns:
+			transform: the carla transform object
+		"""
+		transform = carla.Transform()
+		transform.location.x = pose[0]
+		transform.location.y = pose[1]
+		transform.rotation.yaw = pose[2]
+		return transform
+
+    def _set_synchronous_mode(self, synchronous = True):
+		"""Set whether to use the synchronous mode.
+		"""
+		self.settings.synchronous_mode = synchronous
+		self.world.apply_settings(self.settings)
