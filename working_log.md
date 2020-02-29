@@ -5,7 +5,7 @@ Copyright (c) 2020
 created by Dongjie Yu (yudongjie.moon@foxmail.com)
 
 * This work is modified from: <https://github.com/cjy1992/gym-carla>:
-* Copyright (c) 2019: 
+* Copyright (c) 2019:
 * author: Jianyu Chen (jianyuchen@berkeley.edu)
 * For a copy, see <https://opensource.org/licenses/MIT>.
 
@@ -31,7 +31,13 @@ created by Dongjie Yu (yudongjie.moon@foxmail.com)
         1. 完成```__init__()```方法，并确认route teller方案
         2. 尝试运行__init__()与reset()测试路线有无交叉或重合，录入Town01\02剩余数据
         3. 编写terminal有关到达终点的条件，使用autopilot验证(?)
-
+* 2020.02.29
+    * 已开发：
+        1. 成功实现了自车生成、传感器attach，并通过cv2显示图像
+    * 待开发：
+        1. 实现车辆的运动，实现一个简单的直行10s，判断图像是否实时改变
+        2. 根据简单直行，调试step()、terminal()
+        3. 学习route teller与驾驶执行的实现方式
 ---
 
 ## **Experiment Log**
