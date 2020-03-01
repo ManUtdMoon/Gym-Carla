@@ -8,6 +8,7 @@
 import gym
 import gym_carla
 import carla
+import cv2
 
 def main():
     # parameters for the gym_carla environment
@@ -42,7 +43,14 @@ def main():
     env = gym.make('carla-v0', params=params)
     obs = env.reset()
     while True:
-        env._get_obs()
+        action = [1.0, 0.0, 0.0]
+        obs, r, done, info = env.step(action)
+
+        cv2.imshow("camera img", obs)
+        cv2.waitKey(1)
+
+        if done:
+            env.reset()
 
 
 if __name__ == '__main__':

@@ -38,6 +38,13 @@ created by Dongjie Yu (yudongjie.moon@foxmail.com)
         1. 实现车辆的运动，实现一个简单的直行10s，判断图像是否实时改变
         2. 根据简单直行，调试step()、terminal()
         3. 学习route teller与驾驶执行的实现方式
+* 2020.03.01
+    * 已开发：
+        1. 实现了自车的油门踩到底，图片会实时改变；设定终点并实现```terminal()```符合要求，即done之后```reset()```
+    * 待开发：
+        1. 完善```step()```、```terminal()```
+        2. 学习route teller与驾驶执行的实现方式
+        3. 接下来1-2天会暂停开发，学习[https://github.com/carla-rl-gym/carla-rl](https://github.com/carla-rl-gym/carla-rl)的结构与route指令的实现方式
 ---
 
 ## **Experiment Log**

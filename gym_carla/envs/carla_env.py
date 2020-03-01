@@ -47,6 +47,7 @@ class CarlaEnv(gym.Env):
         self.out_lane_thres = params['out_lane_thres']
         self.desired_speed = params['desired_speed']
         self.max_ego_spawn_times = params['max_ego_spawn_times']
+        self.route_id = 0
 
         # Start and Destination
         if self.code_mode == 'train' or self.code_mode == 'eval':
@@ -67,16 +68,17 @@ class CarlaEnv(gym.Env):
             elif self.task_mode == 'Navigation':
                 pass
         elif self.code_mode == 'test':
+            pass
             # Town02
             # TODO: type in the data
             # if self.task_mode == 'Straight':
-            #     self.starts = [[322.09, 129.35, 180], 
+            #     self.starts = [[322.09, 129.35, 180],
             #                [88.13, 4.32, 90],
             #                [392.47, 87.41, 90],
             #                [383.18, -2.20, 180],
             #                [283.67, 129.48, 180]]
-            #     self.dests = [[119.47, 129.75, 180], 
-            #               [88.13, 299.92, 90], 
+            #     self.dests = [[119.47, 129.75, 180],
+            #               [88.13, 299.92, 90],
             #               [392.47, 308.21, 90],
             #               [185.55, -1.95, 180],
             #               [128.94, 129.75, 180]]
@@ -85,9 +87,14 @@ class CarlaEnv(gym.Env):
             # elif self.task_mode == 'Navigation':
             #     pass
 
+        self.start = self.starts[self.route_id]
+        self.dest = self.dests[self.route_id]
+
         # action and observation space
-        # TODO: confirm the state and actione space
-            pass
+        self.action_space = spaces.Box(np.array([0.0, -1.0, 0.0]),
+            np.array([1.0, 1.0, 1.0]), dtype=np.float32)
+        self.state_space = spaces.Box(low=0, high=256,
+            shape=(self.obs_size, self.obs_size, 3), dtype=np.uint8)
 
         # Connect to carla server and get world object
         print('connecting to Carla server...')
@@ -143,7 +150,38 @@ class CarlaEnv(gym.Env):
         
 
     def step(self, action):
-        pass
+        # Assign acc/steer/brake to action signal
+        throttle, steer, brake = action[0], action[1], action[2]
+        if throttle > 0:
+            brake = 0
+        elif brake > 0:
+            throttle = 0
+
+        # Apply control
+        act = carla.VehicleControl(throttle=float(throttle), steer=float(steer), brake=float(brake))
+        self.ego.apply_control(act)
+
+        self.world.tick()
+
+        # Append actors polygon list
+        # vehicle_poly_dict = self._get_actor_polygons('vehicle.*')
+        # self.vehicle_polygons.append(vehicle_poly_dict)
+        # while len(self.vehicle_polygons) > self.max_past_step:
+        #     self.vehicle_polygons.pop(0)
+        # walker_poly_dict = self._get_actor_polygons('walker.*')
+        # self.walker_polygons.append(walker_poly_dict)
+        # while len(self.walker_polygons) > self.max_past_step:
+        #     self.walker_polygons.pop(0)
+
+        # Route Planner
+
+        # State Info (Necessary?)
+
+        # Update timesteps
+        self.time_step += 1
+        self.total_step += 1
+
+        return (self._get_obs(), 'reward', self._terminal(), 'info')
 
     def reset(self):
         # Clear sensor objects
@@ -182,7 +220,6 @@ class CarlaEnv(gym.Env):
                 count -= 1
 
         # Get actors polygon list
-        # TODO: Whether this part is useful
         self.vehicle_polygons = []
         vehicle_poly_dict = self._get_actor_polygons('vehicle.*')
         self.vehicle_polygons.append(vehicle_poly_dict)
@@ -199,7 +236,7 @@ class CarlaEnv(gym.Env):
 
             if self.task_mode == 'Straight':
                 # transform = random.choice(self.starts)  # formal
-                transform = self._set_carla_transform(self.starts[0])
+                transform = self._set_carla_transform(self.starts[self.route_id])
             if self._try_spawn_ego_vehicle_at(transform):
                 break
             else:
@@ -248,6 +285,27 @@ class CarlaEnv(gym.Env):
     def close(self):
         self._clear_all_actors(['sensor.other.collision', 'sensor.camera.rgb', 'vehicle.*', 'controller.ai.walker', 'walker.*'])
         pass
+
+    def _terminal(self):
+        """Calculate whether to terminate the current episode."""
+        # Get ego state
+        ego_x, ego_y = self._get_ego_pos()
+
+        # If collides
+
+
+        # If reach maximum timestep
+
+
+        # If at destination
+        dest = self.dest
+        if np.sqrt((ego_x-dest[0])**2+(ego_y-dest[1])**2) < 4:
+            return True
+
+        # If out of lane
+        
+
+        return False
     
     def _clear_all_actors(self, actor_filters):
         """Clear specific actors."""
@@ -278,7 +336,6 @@ class CarlaEnv(gym.Env):
             bp.set_attribute('color', color)
         return bp
 
-    # TODO: Decide whether this method is useful
     def _get_actor_polygons(self, filt):
         """Get the bounding box polygon of actors.
 
@@ -308,6 +365,13 @@ class CarlaEnv(gym.Env):
             actor_poly_dict[actor.id]=poly
         return actor_poly_dict
     
+    def _get_ego_pos(self):
+        """Get the ego vehicle pose (x, y)."""
+        ego_trans = self.ego.get_transform()
+        ego_x = ego_trans.location.x
+        ego_y = ego_trans.location.y
+        return ego_x, ego_y
+
     def _set_carla_transform(self, pose):
         """Get a carla tranform object given pose.
 
@@ -408,7 +472,7 @@ class CarlaEnv(gym.Env):
 
     def _get_obs(self):
         current_obs = self.camera_img.copy()
-        cv2.imshow("camera img", current_obs)
-        cv2.waitKey(1)
-        self.world.tick()
+        # cv2.imshow("camera img", current_obs)
+        # cv2.waitKey(1)
+        # self.world.tick()
         return self.camera_img
