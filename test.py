@@ -9,15 +9,19 @@ import gym
 import gym_carla
 import carla
 import cv2
+import torch.multiprocessing as mp
+from torch.multiprocessing import Process, Queue
+import time
 
 def main():
     # parameters for the gym_carla environment
     params = {
+        'agent_id': 0,
         'number_of_vehicles': 0,
         'number_of_walkers': 0,
         'display_size': 256,  # screen size of bird-eye render
         'obs_size': 256,  # screen size of cv2 window
-        # 'max_past_step': 1,  # the number of past steps to draw
+        'max_past_step': 1,  # the number of past steps to draw
         'dt': 0.1,  # time interval between two frames
         # 'discrete': False,  # whether to use discrete control space
         # 'discrete_acc': [-3.0, 0.0, 3.0],  # discrete value of accelerations
@@ -40,18 +44,36 @@ def main():
     }
 
     # Set gym-carla environment
+    procs = []
+    for idx in range(2):
+        procs.append(Process(target=run, args=(params, idx)))
+    for p in procs:
+        p.start()
+        time.sleep(1)
+    for p in procs:
+        p.join()
+
+def run(params, idx):
+    params['agent_id'] = int(idx)
     env = gym.make('carla-v0', params=params)
+    if idx == 0:
+        env.__world_reset__()
     obs = env.reset()
     while True:
-        action = [1.0, 0.0, 0.0]
+        if idx == 0:
+            action = [1.0, 0.0, 0.0]
+        else:
+            action = [1.0, 0.0, 0.0]
         obs, r, done, info = env.step(action)
-
-        cv2.imshow("camera img", obs)
-        cv2.waitKey(1)
+        try:
+            cv2.imshow("camera img", obs)
+            cv2.waitKey(1)
+        except:
+            print("no image")
+            pass
 
         if done:
             env.reset()
-
 
 if __name__ == '__main__':
     main()

@@ -45,6 +45,14 @@ created by Dongjie Yu (yudongjie.moon@foxmail.com)
         1. 完善```step()```、```terminal()```
         2. 学习route teller与驾驶执行的实现方式
         3. 接下来1-2天会暂停开发，学习[https://github.com/carla-rl-gym/carla-rl](https://github.com/carla-rl-gym/carla-rl)的结构与route指令的实现方式
+* 2020.03.03
+    * 已开发：
+        1. 暂时确定了多进程（multi agent）的实现思路，由一个主agent负责管理世界与dynamics以及tick()，正在逐步将自车与世界的管理方法分离
+        2. 已经实现了```world_init```
+    * 待开发：
+        1. 实现所有的world管理方法：init\reset\close
+        2. 测试无周车与行人的情况下多智能体的情况（仅直行，端口号记得修改）
+        3. 继续阅读route teller
 ---
 
 ## **Experiment Log**
