@@ -9,6 +9,7 @@ import gym
 import gym_carla
 import carla
 import cv2
+import time
 
 def main():
     # parameters for the gym_carla environment
@@ -42,14 +43,17 @@ def main():
     # Set gym-carla environment
     env = gym.make('carla-v0', params=params)
     obs = env.reset()
+    tic = time.time()
     while True:
-        action = [1.0, 0.0, 0.0]
+        action = [1.0, 0.00, 0.0]
         obs, r, done, info = env.step(action)
 
         cv2.imshow("camera img", obs)
         cv2.waitKey(1)
 
         if done:
+            toc = time.time()
+            print("An episode took %f s" %(toc - tic))
             env.reset()
 
 

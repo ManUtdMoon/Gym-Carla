@@ -24,6 +24,15 @@ from gym.utils import seeding
 import carla
 import cv2
 
+from .coordinates import train_coordinates
+from .planner.planner import Planner
+
+# REACH_GOAL = 0.0
+# GO_STRAIGHT = 5.0
+# TURN_RIGHT = 4.0
+# TURN_LEFT = 3.0
+# LANE_FOLLOW = 2.0
+
 class CarlaEnv(gym.Env):
     """An OpenAI gym wrapper for CARLA simulator."""
     def __init__(self, params):
@@ -49,43 +58,18 @@ class CarlaEnv(gym.Env):
         self.max_ego_spawn_times = params['max_ego_spawn_times']
         self.route_id = 0
 
+        # used for debugging
+        self.instruction = {0.0: 'REACH_GOAL', 2.0: 'LANE_FOLLOW',
+            3.0: 'TURN_LEFT',4.0: 'TURN_RIGHT',5.0: 'GO_STRAIGHT'}
+
         # Start and Destination
         if self.code_mode == 'train' or self.code_mode == 'eval':
             # Town01
-            if self.task_mode == 'Straight':
-                self.starts = [[322.09, 129.35, 1.5, 180],
-                           [88.13, 4.32, 1.5, 90],
-                           [392.47, 87.41, 1.5, 90],
-                           [383.18, -2.20, 1.5, 180],
-                           [283.67, 129.48, 1.5, 180]]
-                self.dests = [[119.47, 129.75, 1.5, 180],
-                          [88.13, 299.92, 1.5, 90],
-                          [392.47, 308.21, 1.5, 90],
-                          [185.55, -1.95, 1.5, 180],
-                          [128.94, 129.75, 1.5, 180]]
-            elif self.task_mode == 'One curve':
-                pass
-            elif self.task_mode == 'Navigation':
-                pass
+            self.starts, self.dests = train_coordinates(self.task_mode)
         elif self.code_mode == 'test':
             pass
             # Town02
             # TODO: type in the data
-            # if self.task_mode == 'Straight':
-            #     self.starts = [[322.09, 129.35, 180],
-            #                [88.13, 4.32, 90],
-            #                [392.47, 87.41, 90],
-            #                [383.18, -2.20, 180],
-            #                [283.67, 129.48, 180]]
-            #     self.dests = [[119.47, 129.75, 180],
-            #               [88.13, 299.92, 90],
-            #               [392.47, 308.21, 90],
-            #               [185.55, -1.95, 180],
-            #               [128.94, 129.75, 180]]
-            # elif self.task_mode == 'One curve':
-            #     pass
-            # elif self.task_mode == 'Navigation':
-            #     pass
 
         self.start = self.starts[self.route_id]
         self.dest = self.dests[self.route_id]
@@ -102,8 +86,10 @@ class CarlaEnv(gym.Env):
         client.set_timeout(10.0)
         if self.code_mode == 'train' or self.code_mode == 'eval':
             self.world = client.load_world('Town01')
+            self._planner = Planner('Town01')
         elif self.code_mode == 'test':
             self.world = client.load_world('Town02')
+            self._planner = Planner('Town02')
         print('Carla server connected!')
 
         # Set weather
@@ -138,6 +124,10 @@ class CarlaEnv(gym.Env):
         # Set the time in seconds between sensor captures
         self.camera_bp.set_attribute('sensor_tick', '0.02')
 
+        # Lane Invasion Sensor
+        self.lane_bp = self.world.get_blueprint_library().find('sensor.other.lane_invasion')
+        self.lane_invasion_hist = []
+
         # Set fixed simulation step for synchronous mode
         self.settings = self.world.get_settings()
         self.settings.fixed_delta_seconds = self.dt
@@ -146,8 +136,6 @@ class CarlaEnv(gym.Env):
         self.reset_step = 0
         self.total_step = 0
 
-        # Initialize the render(Not needed now)
-        
 
     def step(self, action):
         # Assign acc/steer/brake to action signal
@@ -174,21 +162,36 @@ class CarlaEnv(gym.Env):
         #     self.walker_polygons.pop(0)
 
         # Route Planner
+        directions = self._get_directions(self.ego.get_transform(), self.dest)
+        self.last_direction = directions
+        print("command is %s" % self.instruction[self.last_direction])
 
         # State Info (Necessary?)
 
         # Update timesteps
         self.time_step += 1
         self.total_step += 1
-
+        print("time step %d" % self.time_step)
+        speed = self.ego.get_velocity()
+        # print(speed.x, speed.y, speed.z)
         return (self._get_obs(), 'reward', self._terminal(), 'info')
 
     def reset(self):
         # Clear sensor objects
+        try:
+            self.camera_sensor.destroy()
+            self.collision_sensor.destroy()
+            self.lane_sensor.destroy()
+        except:
+            print("Sensor not initialized")
         self.camera_sensor = None
+        self.collision_sensor = None
+        self.lane_sensor = None
         
         # Delete sensors, vehicles and walkers
-        self._clear_all_actors(['sensor.other.collision', 'sensor.camera.rgb', 'vehicle.*', 'controller.ai.walker', 'walker.*'])
+        self._clear_all_actors(['sensor.other.collision', 'sensor.camera.rgb', \
+            'vehicle.*', 'controller.ai.walker', 'walker.*', \
+            'sensor.other.lane_invasion'])
 
         # Disable sync mode
         self._set_synchronous_mode(False)
@@ -230,13 +233,13 @@ class CarlaEnv(gym.Env):
         # Spawn the ego vehicle
         ego_spawn_times = 0
         while True:
-            print(ego_spawn_times)
+            # print(ego_spawn_times)
             if ego_spawn_times > self.max_ego_spawn_times:
                 self.reset()
 
             if self.task_mode == 'Straight':
                 # transform = random.choice(self.starts)  # formal
-                transform = self._set_carla_transform(self.starts[self.route_id])
+                transform = self._set_carla_transform(self.start)
             if self._try_spawn_ego_vehicle_at(transform):
                 break
             else:
@@ -265,6 +268,14 @@ class CarlaEnv(gym.Env):
             # array = array[:, :, ::-1]
             self.camera_img = array
 
+        # Add lane invasion sensor
+        self.lane_sensor = self.world.spawn_actor(self.lane_bp, carla.Transform(), attach_to=self.ego)
+        self.lane_sensor.listen(lambda event: get_lane_invasion(event))
+        def get_lane_invasion(event):
+            self.lane_invasion_hist = event.crossed_lane_markings
+            print("length of lane invasion: %d" % len(self.lane_invasion_hist))
+        self.lane_invasion_hist = []
+
         # Update timesteps
         self.time_step=0
         self.reset_step+=1
@@ -275,6 +286,9 @@ class CarlaEnv(gym.Env):
 
         # Route teller
         # TODO: Decide how to use route teller
+        directions = self._get_directions(self.ego.get_transform(), self.dest)
+        self.last_direction = directions
+        print("command is %s" % self.instruction[self.last_direction])
 
         return self._get_obs()
         
@@ -283,8 +297,7 @@ class CarlaEnv(gym.Env):
         pass
 
     def close(self):
-        self._clear_all_actors(['sensor.other.collision', 'sensor.camera.rgb', 'vehicle.*', 'controller.ai.walker', 'walker.*'])
-        pass
+        self.ego.destroy()
 
     def _terminal(self):
         """Calculate whether to terminate the current episode."""
@@ -292,21 +305,26 @@ class CarlaEnv(gym.Env):
         ego_x, ego_y = self._get_ego_pos()
 
         # If collides
-
+        if len(self.collision_hist) > 0:
+            print("Collision happened")
+            return True
 
         # If reach maximum timestep
-
+        if self.time_step > self.max_time_episode:
+            return True
 
         # If at destination
         dest = self.dest
-        if np.sqrt((ego_x-dest[0])**2+(ego_y-dest[1])**2) < 4:
+        if np.sqrt((ego_x-dest[0])**2+(ego_y-dest[1])**2) < 2.0:
             return True
 
         # If out of lane
-        
+        if len(self.lane_invasion_hist) > 0:
+            print("lane invasion happened!")
+            return True
 
         return False
-    
+
     def _clear_all_actors(self, actor_filters):
         """Clear specific actors."""
         for actor_filter in actor_filters:
@@ -364,7 +382,7 @@ class CarlaEnv(gym.Env):
             poly=np.matmul(R,poly_local).transpose()+np.repeat([[x,y]],4,axis=0)
             actor_poly_dict[actor.id]=poly
         return actor_poly_dict
-    
+
     def _get_ego_pos(self):
         """Get the ego vehicle pose (x, y)."""
         ego_trans = self.ego.get_transform()
@@ -376,7 +394,7 @@ class CarlaEnv(gym.Env):
         """Get a carla tranform object given pose.
 
         Args:
-            pose: [x, y, z, yaw].
+            pose: [x, y, z, pitch, roll, yaw].
 
         Returns:
             transform: the carla transform object
@@ -385,7 +403,9 @@ class CarlaEnv(gym.Env):
         transform.location.x = pose[0]
         transform.location.y = pose[1]
         transform.location.z = pose[2]
-        transform.rotation.yaw = pose[3]
+        transform.rotation.pitch = pose[3]
+        transform.rotation.roll = pose[4]
+        transform.rotation.yaw = pose[5]
         return transform
 
     def _set_synchronous_mode(self, synchronous = True):
@@ -393,7 +413,7 @@ class CarlaEnv(gym.Env):
         """
         self.settings.synchronous_mode = synchronous
         self.world.apply_settings(self.settings)
-    
+
     def _try_spawn_ego_vehicle_at(self, transform):
         """Try to spawn the ego vehicle at specific transform.
 
@@ -410,7 +430,6 @@ class CarlaEnv(gym.Env):
             vehicle = self.world.spawn_actor(self.ego_bp, transform)
         else:
             for idx, poly in self.vehicle_polygons[0].items():
-                print("enter for loop")
                 poly_center = np.mean(poly, axis=0)
                 ego_center = np.array([transform.location.x, transform.location.y])
                 dis = np.linalg.norm(poly_center - ego_center)
@@ -476,3 +495,18 @@ class CarlaEnv(gym.Env):
         # cv2.waitKey(1)
         # self.world.tick()
         return self.camera_img
+
+    def _get_directions(self, current_point, end_point):
+        '''
+        params: current position; target_position
+        return: command list
+        '''
+        directions = self._planner.get_next_command(
+            (current_point.location.x,
+             current_point.location.y, 0.22),
+            (current_point.rotation.roll,
+             current_point.rotation.pitch,
+             current_point.rotation.yaw),
+            (end_point[0], end_point[1], 0.22),
+            (end_point[3], end_point[4], end_point[5]))
+        return directions

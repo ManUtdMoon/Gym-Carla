@@ -45,6 +45,14 @@ created by Dongjie Yu (yudongjie.moon@foxmail.com)
         1. 完善```step()```、```terminal()```
         2. 学习route teller与驾驶执行的实现方式
         3. 接下来1-2天会暂停开发，学习[https://github.com/carla-rl-gym/carla-rl](https://github.com/carla-rl-gym/carla-rl)的结构与route指令的实现方式
+
+* 2020.03.09（时隔多天终于开发了是吗）
+    * 已开发：
+        1. 完成了```step()```与```terminal()```的初步版本，并加入了planner，看起来直行的时候并没有问题
+    * 待开发：
+        1. 完成reward函数的设计与实现（考虑元素：距离目标远近……）
+        2. 测试gym-carla框架
+        3. 构思需要修改良哥代码的哪些部分
 ---
 
 ## **Experiment Log**
