@@ -53,6 +53,12 @@ created by Dongjie Yu (yudongjie.moon@foxmail.com)
         1. 完成reward函数的设计与实现（考虑元素：距离目标远近……）
         2. 测试gym-carla框架
         3. 构思需要修改良哥代码的哪些部分
+
+* 2020.03.11
+    * 已开发：
+        1. 完成了reward函数设计与实现；```state_info```的设计与实现
+    * 待开发：
+        1. 测试reward、state_info
 ---
 
 ## **Experiment Log**

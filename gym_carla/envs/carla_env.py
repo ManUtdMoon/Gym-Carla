@@ -136,6 +136,9 @@ class CarlaEnv(gym.Env):
         self.reset_step = 0
         self.total_step = 0
 
+        # A dict used for storing state data
+        self.state_info = {}
+
 
     def step(self, action):
         # Assign acc/steer/brake to action signal
@@ -166,15 +169,24 @@ class CarlaEnv(gym.Env):
         self.last_direction = directions
         print("command is %s" % self.instruction[self.last_direction])
 
-        # State Info (Necessary?)
+        # calculate reward
+        ego_x, ego_y = self._get_ego_pos()
+        dest_x, dest_y = self.dest[0], self.dest[1]
+        self.new_dist = np.linalg.norm((ego_x-dest_x, ego_y-dest_y))
+        current_reward = self._get_reward()
+
+        # Update State Info (Necessary?)
+        self.state_info['dist_to_dest'] = self.new_dist
+        self.state_info['direction'] = self.last_direction
 
         # Update timesteps
         self.time_step += 1
         self.total_step += 1
         print("time step %d" % self.time_step)
-        speed = self.ego.get_velocity()
+        # speed = self.ego.get_velocity()
         # print(speed.x, speed.y, speed.z)
-        return (self._get_obs(), 'reward', self._terminal(), 'info')
+
+        return (self._get_obs(), current_reward, self._terminal(), copy.deepcopy(self.state_info))
 
     def reset(self):
         # Clear sensor objects
@@ -290,7 +302,13 @@ class CarlaEnv(gym.Env):
         self.last_direction = directions
         print("command is %s" % self.instruction[self.last_direction])
 
-        return self._get_obs()
+        ego_x, ego_y = self._get_ego_pos()
+        dest_x, dest_y = self.dest[0], self.dest[1]
+        self.last_dist = np.linalg.norm((ego_x-dest_x, ego_y-dest_y))
+        self.state_info['dist_to_dest'] = self.last_dist
+        self.state_info['direction'] = self.last_direction
+
+        return self._get_obs(), copy.deepcopy(self.state_info)
         
 
     def render(self, mode='human'):
@@ -304,23 +322,34 @@ class CarlaEnv(gym.Env):
         # Get ego state
         ego_x, ego_y = self._get_ego_pos()
 
+        self.isCollided = False
+        self.isTimeOut = False
+        self.isSuccess = False
+        self.isOutOfLane = False
+
         # If collides
         if len(self.collision_hist) > 0:
-            print("Collision happened")
+            print("Collision happened! Episode Done.")
+            self.isCollided = True
             return True
 
         # If reach maximum timestep
         if self.time_step > self.max_time_episode:
+            print("Time out! Episode Done.")
+            self.isTimeOut = True
             return True
 
         # If at destination
         dest = self.dest
         if np.sqrt((ego_x-dest[0])**2+(ego_y-dest[1])**2) < 2.0:
+            print("Get destination! Episode Done.")
+            self.isSuccess = True
             return True
 
         # If out of lane
         if len(self.lane_invasion_hist) > 0:
-            print("lane invasion happened!")
+            print("lane invasion happened! Episode Done.")
+            self.isOutOfLane = True
             return True
 
         return False
@@ -496,6 +525,56 @@ class CarlaEnv(gym.Env):
         # self.world.tick()
         return self.camera_img
 
+    def _get_reward(self):
+        """
+        calculate the reward of current state
+        """
+        # end state
+        # reward for collision
+        r_collision = 0.0
+        if len(self.collision_hist) > 0:
+            r_collision = -300.0
+
+        # reward for out of lane
+        r_out = 0.0
+        if len(self.lane_invasion_hist) > 0:
+            r_out = -300.0
+        
+        # reward for time out
+        # reward for steering
+        r_steer = 0.0
+        if self.instruction[self.last_direction] == 'GO_STRATGHIT' or \
+                self.instruction[self.last_direction] == 'LANE_FOLLOW':
+            if abs(self.ego.get_control.steer) >= 0.2:
+                r_steer = -1.0
+        elif self.instruction[self.last_direction] == 'TURN_LEFT':
+            if self.ego.get_control.steer > 0:
+                r_steer = -1.0
+        elif self.instruction[self.last_direction] == 'TURN_RIGHT':
+            if self.ego.get_control.steer < 0:
+                r_steer = -1.0
+
+        # reward for speed tracking
+        r_speed = 0.0
+        v = self.ego.get_velocity()
+        speed = np.sqrt(v.x**2 + v.y**2)
+        if abs(speed - self.desired_speed) >= 2:
+            r_speed = -1.0
+
+        # reward for getting dest
+        r_dist = 0.0
+        last_dist = self.state_info['dist_to_dest']
+        delta_dist = last_dist - self.new_dist
+        if delta_dist <= 1e-2:
+            r_dist = -1.0
+
+        r_success = 0.0
+        if self.isSuccess:
+            r_success = 100
+
+        return r_collision + r_out + r_steer + r_speed + r_dist + r_success
+
+
     def _get_directions(self, current_point, end_point):
         '''
         params: current position; target_position
@@ -510,3 +589,11 @@ class CarlaEnv(gym.Env):
             (end_point[0], end_point[1], 0.22),
             (end_point[3], end_point[4], end_point[5]))
         return directions
+    
+    def _get_shortest_path(self, start_point, end_point):
+
+        return self._planner.get_shortest_path_distance(
+            [   start_point.location.x, start_point.location.y, 0.22], [
+                start_point.rotation.roll, start_point.rotation.pitch, current_point.rotation.yaw], [
+                end_point[0], end_point[1], 0.22], [
+                end_point[3], end_point[4], end_point[5]])
