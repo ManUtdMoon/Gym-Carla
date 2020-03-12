@@ -59,6 +59,14 @@ created by Dongjie Yu (yudongjie.moon@foxmail.com)
         1. 完成了reward函数设计与实现；```state_info```的设计与实现
     * 待开发：
         1. 测试reward、state_info
+* 2020.03.12(植树节快乐！)
+    * 已开发：
+        1. 测试了整个框架的运行，直行目前没有问题
+        2. 路径规划部分在city_track注释了对A*算法的修正，变成了朴素的版本；目前没有出现**莫名其妙的右转**
+    * 待开发：
+        1. 构思DSAC代码需要修改的部分，明确需求
+        2. 设计神经网络结构
+        3. 确定需要的自车信息，将其也加入state_info
 ---
 
 ## **Experiment Log**

@@ -26,6 +26,7 @@ import cv2
 
 from .coordinates import train_coordinates
 from .planner.planner import Planner
+from .misc import *
 
 # REACH_GOAL = 0.0
 # GO_STRAIGHT = 5.0
@@ -173,11 +174,14 @@ class CarlaEnv(gym.Env):
         ego_x, ego_y = self._get_ego_pos()
         dest_x, dest_y = self.dest[0], self.dest[1]
         self.new_dist = np.linalg.norm((ego_x-dest_x, ego_y-dest_y))
+
+        isDone = self._terminal()
         current_reward = self._get_reward()
+        print("reward of current state:", current_reward)
 
         # Update State Info (Necessary?)
         self.state_info['dist_to_dest'] = self.new_dist
-        self.state_info['direction'] = self.last_direction
+        self.state_info['direction'] = command2Vector(self.last_direction)
 
         # Update timesteps
         self.time_step += 1
@@ -186,7 +190,7 @@ class CarlaEnv(gym.Env):
         # speed = self.ego.get_velocity()
         # print(speed.x, speed.y, speed.z)
 
-        return (self._get_obs(), current_reward, self._terminal(), copy.deepcopy(self.state_info))
+        return (self._get_obs(), current_reward, isDone, copy.deepcopy(self.state_info))
 
     def reset(self):
         # Clear sensor objects
@@ -249,7 +253,7 @@ class CarlaEnv(gym.Env):
             if ego_spawn_times > self.max_ego_spawn_times:
                 self.reset()
 
-            if self.task_mode == 'Straight':
+            if self.task_mode == 'Straight' or self.task_mode == 'One_curve':
                 # transform = random.choice(self.starts)  # formal
                 transform = self._set_carla_transform(self.start)
             if self._try_spawn_ego_vehicle_at(transform):
@@ -306,10 +310,16 @@ class CarlaEnv(gym.Env):
         dest_x, dest_y = self.dest[0], self.dest[1]
         self.last_dist = np.linalg.norm((ego_x-dest_x, ego_y-dest_y))
         self.state_info['dist_to_dest'] = self.last_dist
-        self.state_info['direction'] = self.last_direction
+        self.state_info['direction'] = command2Vector(self.last_direction)
+
+        # End State variable initialized
+        self.isCollided = False
+        self.isTimeOut = False
+        self.isSuccess = False
+        self.isOutOfLane = False
 
         return self._get_obs(), copy.deepcopy(self.state_info)
-        
+
 
     def render(self, mode='human'):
         pass
@@ -321,11 +331,6 @@ class CarlaEnv(gym.Env):
         """Calculate whether to terminate the current episode."""
         # Get ego state
         ego_x, ego_y = self._get_ego_pos()
-
-        self.isCollided = False
-        self.isTimeOut = False
-        self.isSuccess = False
-        self.isOutOfLane = False
 
         # If collides
         if len(self.collision_hist) > 0:
@@ -545,13 +550,13 @@ class CarlaEnv(gym.Env):
         r_steer = 0.0
         if self.instruction[self.last_direction] == 'GO_STRATGHIT' or \
                 self.instruction[self.last_direction] == 'LANE_FOLLOW':
-            if abs(self.ego.get_control.steer) >= 0.2:
+            if abs(self.ego.get_control().steer) >= 0.2:
                 r_steer = -1.0
         elif self.instruction[self.last_direction] == 'TURN_LEFT':
-            if self.ego.get_control.steer > 0:
+            if self.ego.get_control().steer > 0:
                 r_steer = -1.0
         elif self.instruction[self.last_direction] == 'TURN_RIGHT':
-            if self.ego.get_control.steer < 0:
+            if self.ego.get_control().steer < 0:
                 r_steer = -1.0
 
         # reward for speed tracking

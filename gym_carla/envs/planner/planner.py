@@ -74,7 +74,7 @@ class Planner(object):
                                                    track_target, target_ori)
             if route is None:
                 raise RuntimeError('Impossible to find route')
-
+            # print(route)
             self._commands = self._route_to_commands(route)
 
             if self._city_track.is_far_away_from_route_intersection(
@@ -162,7 +162,7 @@ class Planner(object):
             current_to_future = np.array(
                 [future[0] - current[0], future[1] - current[1]])
             angle = signal(current_to_future, past_to_current)
-
+            # print(commands_list)
             if angle < -0.1:
                 command = TURN_RIGHT
             elif angle > 0.1:

@@ -28,9 +28,9 @@ def main():
         'ego_vehicle_filter': 'vehicle.lincoln*',  # filter for defining ego vehicle
         'port': 2000,  # connection port
         # 'town': 'Town01',  # which town to simulate
-        'task_mode': 'Straight',  # mode of the task, [random, roundabout (only for Town03)]
+        'task_mode': 'One_curve',  # mode of the task, [random, roundabout (only for Town03)]
         'code_mode': 'train',
-        'max_time_episode': 1000,  # maximum timesteps per episode
+        'max_time_episode': 5000,  # maximum timesteps per episode
         'max_waypt': 12,  # maximum number of waypoints
         'obs_range': 32,  # observation range (meter)
         'lidar_bin': 0.125,  # bin size of lidar sensor (meter)
@@ -44,17 +44,73 @@ def main():
     env = gym.make('carla-v0', params=params)
     obs = env.reset()
     tic = time.time()
-    while True:
-        action = [1.0, 0.00, 0.0]
-        obs, r, done, info = env.step(action)
+    ret = 0
+    start = carla.Location(x=env.start[0], y=env.start[1], z=0.22)
+    end = carla.Location(x=env.dest[0], y=env.dest[1], z=0.22)
 
+    while True:
+        # tac = time.time()
+        # if tac - tic <= 10:
+        #     action = [0.0, 0.00, 0.0]
+        # else:
+        action = [0.8, 0.00, 0.0]
+        obs, r, done, info = env.step(action)
+        ret += r
         cv2.imshow("camera img", obs)
         cv2.waitKey(1)
 
+        env.world.debug.draw_point(start)
+        env.world.debug.draw_point(end)
+
         if done:
             toc = time.time()
+
             print("An episode took %f s" %(toc - tic))
-            env.reset()
+            print("total reward is", ret)
+            env.close()
+            break
+
+    # turn left
+    # obs = env.reset()
+    # tic = time.time()
+
+    # start = carla.Location(x=env.start[0], y=env.start[1], z=0.22)
+    # end = carla.Location(x=env.dest[0], y=env.dest[1], z=0.22)
+
+    # while True:
+    #     action = [0.5, 0.0, 0.0]
+    #     obs, r, done, info = env.step(action)
+    #     ret += r
+    #     cv2.imshow("camera img", obs)
+    #     cv2.waitKey(1)
+    #     env.world.debug.draw_point(start)
+    #     env.world.debug.draw_point(end)
+
+    #     if done:
+    #         toc = time.time()
+
+    #         print("An episode took %f s" %(toc - tic))
+    #         print("total reward is", ret)
+    #         env.close()
+    #         break
+
+    # # Stay still
+    # obs = env.reset()
+    # tic = time.time()
+    # while True:
+    #     action = [0.0, 0.0, 0.0]
+    #     obs, r, done, info = env.step(action)
+
+    #     cv2.imshow("camera img", obs)
+    #     cv2.waitKey(1)
+
+    #     if done:
+    #         toc = time.time()
+
+    #         print("An episode took %f s" %(toc - tic))
+    #         env.close()
+    #         break
+
 
 
 if __name__ == '__main__':

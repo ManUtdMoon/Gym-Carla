@@ -81,15 +81,15 @@ class CityTrack(object):
 
         self._previous_node = node_source
 
-        a_star = AStar()
-        a_star.init_grid(self._map.get_graph_resolution()[0],
-                         self._map.get_graph_resolution()[1],
-                         self._map.get_walls_directed(node_source, source_ori,
-                                                      node_target, target_ori), node_source,
-                         node_target)
+        # a_star = AStar()
+        # a_star.init_grid(self._map.get_graph_resolution()[0],
+        #                  self._map.get_graph_resolution()[1],
+        #                  self._map.get_walls_directed(node_source, source_ori,
+        #                                               node_target, target_ori), node_source,
+        #                  node_target)
 
-        route = a_star.solve()
-
+        # route = a_star.solve()
+        route = None
         # JuSt a Corner Case
         # Clean this to avoid having to use this function
         if route is None:
