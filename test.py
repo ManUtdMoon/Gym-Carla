@@ -28,7 +28,7 @@ def main():
         'ego_vehicle_filter': 'vehicle.lincoln*',  # filter for defining ego vehicle
         'port': 2000,  # connection port
         # 'town': 'Town01',  # which town to simulate
-        'task_mode': 'One_curve',  # mode of the task, [random, roundabout (only for Town03)]
+        'task_mode': 'Straight',  # mode of the task, [random, roundabout (only for Town03)]
         'code_mode': 'train',
         'max_time_episode': 5000,  # maximum timesteps per episode
         'max_waypt': 12,  # maximum number of waypoints
@@ -53,7 +53,7 @@ def main():
         # if tac - tic <= 10:
         #     action = [0.0, 0.00, 0.0]
         # else:
-        action = [0.8, 0.00, 0.0]
+        action = [0.8, 0.00]
         obs, r, done, info = env.step(action)
         ret += r
         cv2.imshow("camera img", obs)

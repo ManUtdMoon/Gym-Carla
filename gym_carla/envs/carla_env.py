@@ -143,11 +143,13 @@ class CarlaEnv(gym.Env):
 
     def step(self, action):
         # Assign acc/steer/brake to action signal
-        throttle, steer, brake = action[0], action[1], action[2]
-        if throttle > 0:
+        throttle_or_brake, steer = action[0], action[1]
+        if throttle_or_brake >= 0:
+            throttle = throttle_or_brake
             brake = 0
-        elif brake > 0:
+        else:
             throttle = 0
+            brake = -throttle_or_brake
 
         # Apply control
         act = carla.VehicleControl(throttle=float(throttle), steer=float(steer), brake=float(brake))
