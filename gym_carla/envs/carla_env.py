@@ -76,8 +76,8 @@ class CarlaEnv(gym.Env):
         self.dest = self.dests[self.route_id]
 
         # action and observation space
-        self.action_space = spaces.Box(np.array([0.0, -1.0, 0.0]),
-            np.array([1.0, 1.0, 1.0]), dtype=np.float32)
+        self.action_space = spaces.Box(np.array([-1.0, -1.0]),
+            np.array([1.0, 1.0]), dtype=np.float32)
         self.state_space = spaces.Box(low=0, high=256,
             shape=(self.obs_size, self.obs_size, 3), dtype=np.uint8)
 
