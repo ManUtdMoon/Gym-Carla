@@ -182,8 +182,15 @@ class CarlaEnv(gym.Env):
         print("reward of current state:", current_reward)
 
         # Update State Info (Necessary?)
+        velocity = self.ego.get_velocity()
+        accel = self.ego.get_acceleration()
+        self.v_t = np.array([[velocity.x], [velocity.y]])
+        self.a_t = np.array([[accel.x], [accel.y]])
+
         self.state_info['dist_to_dest'] = self.new_dist
         self.state_info['direction'] = command2Vector(self.last_direction)
+        self.state_info['velocity_t'] = self.v_t
+        self.state_info['acceleration_t'] = self.a_t
 
         # Update timesteps
         self.time_step += 1
@@ -311,6 +318,14 @@ class CarlaEnv(gym.Env):
         ego_x, ego_y = self._get_ego_pos()
         dest_x, dest_y = self.dest[0], self.dest[1]
         self.last_dist = np.linalg.norm((ego_x-dest_x, ego_y-dest_y))
+
+        velocity = self.ego.get_velocity()
+        accel = self.ego.get_acceleration()
+        self.v_t = np.array([[velocity.x], [velocity.y]])
+        self.a_t = np.array([[accel.x], [accel.y]])
+
+        self.state_info['velocity_t'] = self.v_t
+        self.state_info['acceleration_t'] = self.a_t
         self.state_info['dist_to_dest'] = self.last_dist
         self.state_info['direction'] = command2Vector(self.last_direction)
 
@@ -565,7 +580,7 @@ class CarlaEnv(gym.Env):
         r_speed = 0.0
         v = self.ego.get_velocity()
         speed = np.sqrt(v.x**2 + v.y**2)
-        if abs(speed - self.desired_speed) >= 2:
+        if abs(speed - self.desired_speed) >= 3:
             r_speed = -1.0
 
         # reward for getting dest

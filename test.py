@@ -56,9 +56,9 @@ def main():
         action = [0.8, 0.00]
         obs, r, done, info = env.step(action)
         ret += r
-        cv2.imshow("camera img", obs)
-        cv2.waitKey(1)
-
+        # cv2.imshow("camera img", obs)
+        # cv2.waitKey(1)
+        # print(info['acceleration_t'].shape)
         env.world.debug.draw_point(start)
         env.world.debug.draw_point(end)
 
