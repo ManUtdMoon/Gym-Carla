@@ -38,8 +38,6 @@ class CarlaEnv(gym.Env):
     """An OpenAI gym wrapper for CARLA simulator."""
     def __init__(self, params):
         # parameters
-        self.display_size = params['display_size']  # rendering screen size
-        # self.max_past_step = params['max_past_step']
         self.number_of_vehicles = params['number_of_vehicles']
         self.number_of_walkers = params['number_of_walkers']
         self.dt = params['dt']
@@ -48,13 +46,7 @@ class CarlaEnv(gym.Env):
         self.code_mode = params['code_mode']
 
         self.max_time_episode = params['max_time_episode']
-        # self.max_waypt = params['max_waypt']
-        # self.obs_range = params['obs_range']
-        # self.lidar_bin = params['lidar_bin']
-        # self.d_behind = params['d_behind']
-        # self.obs_size = int(self.obs_range/self.lidar_bin)
         self.obs_size = params['obs_size']
-        self.out_lane_thres = params['out_lane_thres']
         self.desired_speed = params['desired_speed']
         self.max_ego_spawn_times = params['max_ego_spawn_times']
         self.route_id = 0
@@ -170,7 +162,7 @@ class CarlaEnv(gym.Env):
         # Route Planner
         directions = self._get_directions(self.ego.get_transform(), self.dest)
         self.last_direction = directions
-        print("command is %s" % self.instruction[self.last_direction])
+        # print("command is %s" % self.instruction[self.last_direction])
 
         # calculate reward
         ego_x, ego_y = self._get_ego_pos()
@@ -179,7 +171,7 @@ class CarlaEnv(gym.Env):
 
         isDone = self._terminal()
         current_reward = self._get_reward()
-        print("reward of current state:", current_reward)
+        # print("reward of current state:", current_reward)
 
         # Update State Info (Necessary?)
         velocity = self.ego.get_velocity()
@@ -195,7 +187,7 @@ class CarlaEnv(gym.Env):
         # Update timesteps
         self.time_step += 1
         self.total_step += 1
-        print("time step %d" % self.time_step)
+        # print("time step %d" % self.time_step)
         # speed = self.ego.get_velocity()
         # print(speed.x, speed.y, speed.z)
 
@@ -270,7 +262,7 @@ class CarlaEnv(gym.Env):
             else:
                 ego_spawn_times += 1
                 time.sleep(0.1)
-        print("Ego car spawn Success!")
+        # print("Ego car spawn Success!")
 
         # Add collision sensor
         self.collision_sensor = self.world.spawn_actor(self.collision_bp, carla.Transform(), attach_to=self.ego)
@@ -298,7 +290,7 @@ class CarlaEnv(gym.Env):
         self.lane_sensor.listen(lambda event: get_lane_invasion(event))
         def get_lane_invasion(event):
             self.lane_invasion_hist = event.crossed_lane_markings
-            print("length of lane invasion: %d" % len(self.lane_invasion_hist))
+            # print("length of lane invasion: %d" % len(self.lane_invasion_hist))
         self.lane_invasion_hist = []
 
         # Update timesteps
@@ -313,7 +305,7 @@ class CarlaEnv(gym.Env):
         # TODO: Decide how to use route teller
         directions = self._get_directions(self.ego.get_transform(), self.dest)
         self.last_direction = directions
-        print("command is %s" % self.instruction[self.last_direction])
+        # print("command is %s" % self.instruction[self.last_direction])
 
         ego_x, ego_y = self._get_ego_pos()
         dest_x, dest_y = self.dest[0], self.dest[1]
@@ -545,7 +537,7 @@ class CarlaEnv(gym.Env):
         # cv2.imshow("camera img", current_obs)
         # cv2.waitKey(1)
         # self.world.tick()
-        return self.camera_img
+        return current_obs
 
     def _get_reward(self):
         """
