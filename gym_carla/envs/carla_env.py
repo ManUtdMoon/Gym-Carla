@@ -12,7 +12,6 @@ from __future__ import division
 
 import copy
 import numpy as np
-import pygame
 import random
 import time
 from collections import deque
