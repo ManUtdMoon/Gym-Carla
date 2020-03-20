@@ -37,8 +37,8 @@ class CarlaEnv(gym.Env):
     """An OpenAI gym wrapper for CARLA simulator."""
     def __init__(self, params):
         # parameters
-        self.number_of_vehicles = params['number_of_vehicles']
-        self.number_of_walkers = params['number_of_walkers']
+        # self.number_of_vehicles = params['number_of_vehicles']
+        # self.number_of_walkers = params['number_of_walkers']
         self.dt = params['dt']
 
         self.task_mode = params['task_mode']
@@ -88,14 +88,14 @@ class CarlaEnv(gym.Env):
         self.world.set_weather(carla.WeatherParameters.ClearNoon)
 
         # Get spawn points
-        self.vehicle_spawn_points = list(self.world.get_map().get_spawn_points())
-        self.walker_spawn_points = []
-        for i in range(self.number_of_walkers):
-            spawn_point = carla.Transform()
-            loc = self.world.get_random_location_from_navigation()
-            if (loc != None):
-                spawn_point.location = loc
-                self.walker_spawn_points.append(spawn_point)
+        # self.vehicle_spawn_points = list(self.world.get_map().get_spawn_points())
+        # self.walker_spawn_points = []
+        # for i in range(self.number_of_walkers):
+        #     spawn_point = carla.Transform()
+        #     loc = self.world.get_random_location_from_navigation()
+        #     if (loc != None):
+        #         spawn_point.location = loc
+        #         self.walker_spawn_points.append(spawn_point)
 
         # Create the ego vehicle blueprint
         self.ego_bp = self._create_vehicle_bluepprint(params['ego_vehicle_filter'], color='49,8,8')
@@ -148,16 +148,6 @@ class CarlaEnv(gym.Env):
 
         self.world.tick()
 
-        # Append actors polygon list
-        # vehicle_poly_dict = self._get_actor_polygons('vehicle.*')
-        # self.vehicle_polygons.append(vehicle_poly_dict)
-        # while len(self.vehicle_polygons) > self.max_past_step:
-        #     self.vehicle_polygons.pop(0)
-        # walker_poly_dict = self._get_actor_polygons('walker.*')
-        # self.walker_polygons.append(walker_poly_dict)
-        # while len(self.walker_polygons) > self.max_past_step:
-        #     self.walker_polygons.pop(0)
-
         # Route Planner
         directions = self._get_directions(self.ego.get_transform(), self.dest)
         self.last_direction = directions
@@ -203,7 +193,7 @@ class CarlaEnv(gym.Env):
         self.camera_sensor = None
         self.collision_sensor = None
         self.lane_sensor = None
-        
+
         # Delete sensors, vehicles and walkers
         self._clear_all_actors(['sensor.other.collision', 'sensor.camera.rgb', \
             'vehicle.*', 'controller.ai.walker', 'walker.*', \
@@ -211,40 +201,6 @@ class CarlaEnv(gym.Env):
 
         # Disable sync mode
         self._set_synchronous_mode(False)
-
-        # Spawn surrounding vehicles
-        random.shuffle(self.vehicle_spawn_points)
-        count = self.number_of_vehicles
-        if count > 0:
-            for spawn_point in self.vehicle_spawn_points:
-                if self._try_spawn_random_vehicle_at(spawn_point, number_of_wheels=[4]):
-                    count -= 1
-                if count <= 0:
-                    break
-        while count > 0:
-            if self._try_spawn_random_vehicle_at(random.choice(self.vehicle_spawn_points), number_of_wheels=[4]):
-                count -= 1
-
-        # Spawn pedestrians
-        random.shuffle(self.walker_spawn_points)
-        count = self.number_of_walkers
-        if count > 0:
-            for spawn_point in self.walker_spawn_points:
-                if self._try_spawn_random_walker_at(spawn_point):
-                    count -= 1
-                if count <= 0:
-                    break
-        while count > 0:
-            if self._try_spawn_random_walker_at(random.choice(self.walker_spawn_points)):
-                count -= 1
-
-        # Get actors polygon list
-        self.vehicle_polygons = []
-        vehicle_poly_dict = self._get_actor_polygons('vehicle.*')
-        self.vehicle_polygons.append(vehicle_poly_dict)
-        self.walker_polygons = []
-        walker_poly_dict = self._get_actor_polygons('walker.*')
-        self.walker_polygons.append(walker_poly_dict)
 
         # Spawn the ego vehicle
         ego_spawn_times = 0
