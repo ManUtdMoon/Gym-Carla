@@ -26,6 +26,7 @@ import cv2
 from .coordinates import train_coordinates
 from .planner.planner import Planner
 from .misc import *
+from .carla_logger import *
 
 # REACH_GOAL = 0.0
 # GO_STRAIGHT = 5.0
@@ -36,14 +37,12 @@ from .misc import *
 class CarlaEnv(gym.Env):
     """An OpenAI gym wrapper for CARLA simulator."""
     def __init__(self, params):
+        self.logger = setup_carla_logger("output_logger", experiment_name=str(params['port']))
+        self.logger.info("Env running in port {}".format(params['port']))
         # parameters
-        # self.number_of_vehicles = params['number_of_vehicles']
-        # self.number_of_walkers = params['number_of_walkers']
         self.dt = params['dt']
-
         self.task_mode = params['task_mode']
         self.code_mode = params['code_mode']
-
         self.max_time_episode = params['max_time_episode']
         self.obs_size = params['obs_size']
         self.desired_speed = params['desired_speed']
@@ -73,16 +72,20 @@ class CarlaEnv(gym.Env):
             shape=(self.obs_size, self.obs_size, 3), dtype=np.uint8)
 
         # Connect to carla server and get world object
-        print('connecting to Carla server...')
-        client = carla.Client('localhost', params['port'])
-        client.set_timeout(10.0)
+        # print('connecting to Carla server...')
+        self.logger.info("connecting to Carla server...")
+
+        self.client = carla.Client('localhost', params['port'])
+        self.client.set_timeout(10.0)
         if self.code_mode == 'train' or self.code_mode == 'eval':
-            self.world = client.load_world('Town01')
+            self.world = self.client.load_world('Town01')
             self._planner = Planner('Town01')
         elif self.code_mode == 'test':
-            self.world = client.load_world('Town02')
+            self.world = self.client.load_world('Town02')
             self._planner = Planner('Town02')
-        print('Carla server connected!')
+
+        # print('Carla server connected!')
+        self.logger.info("Carla server connected!")
 
         # Set weather
         self.world.set_weather(carla.WeatherParameters.ClearNoon)
@@ -130,6 +133,9 @@ class CarlaEnv(gym.Env):
 
         # A dict used for storing state data
         self.state_info = {}
+
+        # A list stores the ids for each episode
+        self.actors = []
 
 
     def step(self, action):
@@ -184,20 +190,14 @@ class CarlaEnv(gym.Env):
 
     def reset(self):
         # Clear sensor objects
-        try:
-            self.camera_sensor.destroy()
-            self.collision_sensor.destroy()
-            self.lane_sensor.destroy()
-        except:
-            print("Sensor not initialized")
         self.camera_sensor = None
         self.collision_sensor = None
         self.lane_sensor = None
 
         # Delete sensors, vehicles and walkers
-        self._clear_all_actors(['sensor.other.collision', 'sensor.camera.rgb', \
-            'vehicle.*', 'controller.ai.walker', 'walker.*', \
-            'sensor.other.lane_invasion'])
+        for x in self.actors:
+            x.destroy()
+        self.actors = []
 
         # Disable sync mode
         self._set_synchronous_mode(False)
@@ -217,10 +217,12 @@ class CarlaEnv(gym.Env):
             else:
                 ego_spawn_times += 1
                 time.sleep(0.1)
-        print("Ego car spawn Success!")
+        # print("Ego car spawn Success!")
+        self.logger.info("Ego car spawn Success!")
 
         # Add collision sensor
         self.collision_sensor = self.world.spawn_actor(self.collision_bp, carla.Transform(), attach_to=self.ego)
+        self.actors.append(self.collision_sensor)
         self.collision_sensor.listen(lambda event: get_collision_hist(event))
         def get_collision_hist(event):
             impulse = event.normal_impulse
@@ -232,6 +234,7 @@ class CarlaEnv(gym.Env):
 
         # Add camera sensor
         self.camera_sensor = self.world.spawn_actor(self.camera_bp, self.camera_trans, attach_to=self.ego)
+        self.actors.append(self.camera_sensor)
         self.camera_sensor.listen(lambda data: get_camera_img(data))
         def get_camera_img(data):
             array = np.frombuffer(data.raw_data, dtype = np.dtype("uint8"))
@@ -242,6 +245,7 @@ class CarlaEnv(gym.Env):
 
         # Add lane invasion sensor
         self.lane_sensor = self.world.spawn_actor(self.lane_bp, carla.Transform(), attach_to=self.ego)
+        self.actors.append(self.lane_sensor)
         self.lane_sensor.listen(lambda event: get_lane_invasion(event))
         def get_lane_invasion(event):
             self.lane_invasion_hist = event.crossed_lane_markings
@@ -298,26 +302,30 @@ class CarlaEnv(gym.Env):
 
         # If collides
         if len(self.collision_hist) > 0:
-            print("Collision happened! Episode Done.")
+            # print("Collision happened! Episode Done.")
+            self.logger.info('Collision happened! Episode Done.')
             self.isCollided = True
             return True
 
         # If reach maximum timestep
         if self.time_step > self.max_time_episode:
-            print("Time out! Episode Done.")
+            # print("Time out! Episode Done.")
+            self.logger.info('Time out! Episode Done.')
             self.isTimeOut = True
             return True
 
         # If at destination
         dest = self.dest
         if np.sqrt((ego_x-dest[0])**2+(ego_y-dest[1])**2) < 2.0:
-            print("Get destination! Episode Done.")
+            # print("Get destination! Episode Done.")
+            self.logger.info('Get destination! Episode Done.')
             self.isSuccess = True
             return True
 
         # If out of lane
         if len(self.lane_invasion_hist) > 0:
-            print("lane invasion happened! Episode Done.")
+            # print("lane invasion happened! Episode Done.")
+            self.logger.info('lane invasion happened! Episode Done.')
             self.isOutOfLane = True
             return True
 
@@ -328,7 +336,7 @@ class CarlaEnv(gym.Env):
         for actor_filter in actor_filters:
             for actor in self.world.get_actors().filter(actor_filter):
                 if actor.is_alive:
-                    if actor.type_id == 'controller.ai.walker':
+                    if actor.type_id == 'controller.ai.walker' or actor.type_id == 'sensor.camera.rgb' or actor.type_id == 'sensor.other.collision':
                         actor.stop()
                     actor.destroy()
 
@@ -421,23 +429,8 @@ class CarlaEnv(gym.Env):
         Returns:
             Bool indicating whether the spawn is successful.
         """
-        vehicle = None
-
-        if self.number_of_vehicles == 0 and self.number_of_walkers == 0:
-            print("no dynamic")
-            vehicle = self.world.spawn_actor(self.ego_bp, transform)
-        else:
-            for idx, poly in self.vehicle_polygons[0].items():
-                poly_center = np.mean(poly, axis=0)
-                ego_center = np.array([transform.location.x, transform.location.y])
-                dis = np.linalg.norm(poly_center - ego_center)
-                print(dis)
-                if dis > 8:
-                    vehicle = self.world.try_spawn_actor(self.ego_bp, transform)
-                    break
-                else:
-                    return False
-
+        vehicle = self.world.spawn_actor(self.ego_bp, transform)
+        self.actors.append(vehicle)
         if vehicle is not None:
             self.ego=vehicle
             return True
