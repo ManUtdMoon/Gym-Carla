@@ -217,7 +217,7 @@ class CarlaEnv(gym.Env):
             else:
                 ego_spawn_times += 1
                 time.sleep(0.1)
-        # print("Ego car spawn Success!")
+        print("Ego car spawn Success!")
 
         # Add collision sensor
         self.collision_sensor = self.world.spawn_actor(self.collision_bp, carla.Transform(), attach_to=self.ego)
