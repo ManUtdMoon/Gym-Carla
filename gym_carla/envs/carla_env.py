@@ -68,8 +68,8 @@ class CarlaEnv(gym.Env):
         # action and observation space
         self.action_space = spaces.Box(np.array([-1.0, -1.0]),
             np.array([1.0, 1.0]), dtype=np.float32)
-        self.state_space = spaces.Box(low=0, high=256,
-            shape=(self.obs_size, self.obs_size, 3), dtype=np.uint8)
+        self.state_space = spaces.Box(low=0.0, high=1.0,
+            shape=(self.obs_size, self.obs_size, 3), dtype=np.float32)
 
         # Connect to carla server and get world object
         # print('connecting to Carla server...')
@@ -485,7 +485,7 @@ class CarlaEnv(gym.Env):
         # cv2.imshow("camera img", current_obs)
         # cv2.waitKey(1)
         # self.world.tick()
-        return current_obs
+        return current_obs / 255.0
 
     def _get_reward(self):
         """
