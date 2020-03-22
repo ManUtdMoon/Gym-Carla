@@ -31,72 +31,75 @@ def main():
     env = gym.make('carla-v0', params=params)
     obs = env.reset()
     tic = time.time()
+    done = False
     ret = 0
     start = carla.Location(x=env.start[0], y=env.start[1], z=0.22)
     end = carla.Location(x=env.dest[0], y=env.dest[1], z=0.22)
 
-    while True:
-        # tac = time.time()
-        # if tac - tic <= 10:
-        #     action = [0.0, 0.00, 0.0]
-        # else:
-        action = [0.8, 0.00]
+    while not done:
+        tac = time.time()
+        if tac - tic <= 10:
+            action = [0.0, 0.0]
+        else:
+            action = [0.0, 0.00]
         obs, r, done, info = env.step(action)
+        # print(info['velocity_t'])
         ret += r
-        # cv2.imshow("camera img", obs)
-        # cv2.waitKey(1)
+        cv2.imshow("camera img", obs)
+        cv2.waitKey(1)
         # print(info['acceleration_t'].shape)
         env.world.debug.draw_point(start)
         env.world.debug.draw_point(end)
 
         if done:
             toc = time.time()
-
             print("An episode took %f s" %(toc - tic))
             print("total reward is", ret)
-            # env.close()
-            break
+            env.close()
+            env.reset()
+            done = False
+            # break
 
     # turn left
-    obs = env.reset()
-    tic = time.time()
+    # obs = env.reset()
+    # tic = time.time()
 
-    start = carla.Location(x=env.start[0], y=env.start[1], z=0.22)
-    end = carla.Location(x=env.dest[0], y=env.dest[1], z=0.22)
+    # start = carla.Location(x=env.start[0], y=env.start[1], z=0.22)
+    # end = carla.Location(x=env.dest[0], y=env.dest[1], z=0.22)
 
-    while True:
-        action = [0.8, 0.0]
-        obs, r, done, info = env.step(action)
-        ret += r
-        cv2.imshow("camera img", obs)
-        cv2.waitKey(1)
-        env.world.debug.draw_point(start)
-        env.world.debug.draw_point(end)
+    # while True:
+    #     action = [0.8, 0.0]
+    #     obs, r, done, info = env.step(action)
+    #     ret += r
+    #     cv2.imshow("camera img", obs)
+    #     cv2.waitKey(1)
+    #     env.world.debug.draw_point(start)
+    #     env.world.debug.draw_point(end)
 
-        if done:
-            toc = time.time()
+    #     if done:
+    #         toc = time.time()
 
-            print("An episode took %f s" %(toc - tic))
-            print("total reward is", ret)
-            # env.close()
-            break
+    #         print("An episode took %f s" %(toc - tic))
+    #         print("total reward is", ret)
+    #         # env.close()
+    #         break
 
-    # # Stay still
-    obs = env.reset()
-    tic = time.time()
-    while True:
-        action = [0.8, 0.0]
-        obs, r, done, info = env.step(action)
+    # # # Stay still
+    # obs = env.reset()
+    # tic = time.time()
+    # while True:
+    #     action = [0.8, 0.0]
+    #     obs, r, done, info = env.step(action)
 
-        cv2.imshow("camera img", obs)
-        cv2.waitKey(1)
+    #     cv2.imshow("camera img", obs)
+    #     cv2.waitKey(1)
 
-        if done:
-            toc = time.time()
+    #     if done:
+    #         toc = time.time()
 
-            print("An episode took %f s" %(toc - tic))
-            # env.close()
-            break
+    #         print("An episode took %f s" %(toc - tic))
+    #         # env.close()
+    #         break
 
 
 

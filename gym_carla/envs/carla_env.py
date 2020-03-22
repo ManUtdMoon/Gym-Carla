@@ -34,6 +34,7 @@ from .carla_logger import *
 # TURN_LEFT = 3.0
 # LANE_FOLLOW = 2.0
 
+
 class CarlaEnv(gym.Env):
     """An OpenAI gym wrapper for CARLA simulator."""
     def __init__(self, params):
@@ -41,6 +42,7 @@ class CarlaEnv(gym.Env):
         self.logger.info("Env running in port {}".format(params['port']))
         # parameters
         self.dt = params['dt']
+        self.port = params['port']
         self.task_mode = params['task_mode']
         self.code_mode = params['code_mode']
         self.max_time_episode = params['max_time_episode']
@@ -73,32 +75,7 @@ class CarlaEnv(gym.Env):
 
         # Connect to carla server and get world object
         # print('connecting to Carla server...')
-        self.logger.info("connecting to Carla server...")
-
-        self.client = carla.Client('localhost', params['port'])
-        self.client.set_timeout(10.0)
-        if self.code_mode == 'train' or self.code_mode == 'eval':
-            self.world = self.client.load_world('Town01')
-            self._planner = Planner('Town01')
-        elif self.code_mode == 'test':
-            self.world = self.client.load_world('Town02')
-            self._planner = Planner('Town02')
-
-        # print('Carla server connected!')
-        self.logger.info("Carla server connected!")
-
-        # Set weather
-        self.world.set_weather(carla.WeatherParameters.ClearNoon)
-
-        # Get spawn points
-        # self.vehicle_spawn_points = list(self.world.get_map().get_spawn_points())
-        # self.walker_spawn_points = []
-        # for i in range(self.number_of_walkers):
-        #     spawn_point = carla.Transform()
-        #     loc = self.world.get_random_location_from_navigation()
-        #     if (loc != None):
-        #         spawn_point.location = loc
-        #         self.walker_spawn_points.append(spawn_point)
+        self._make_carla_client('localhost', self.port)
 
         # Create the ego vehicle blueprint
         self.ego_bp = self._create_vehicle_bluepprint(params['ego_vehicle_filter'], color='49,8,8')
@@ -147,7 +124,9 @@ class CarlaEnv(gym.Env):
         else:
             throttle = 0
             brake = -throttle_or_brake
-
+        # print(action)
+        # print(self.ego.get_velocity())
+        # print(self.time_step)
         # Apply control
         act = carla.VehicleControl(throttle=float(throttle), steer=float(steer), brake=float(brake))
         self.ego.apply_control(act)
@@ -161,8 +140,7 @@ class CarlaEnv(gym.Env):
 
         # calculate reward
         ego_x, ego_y = self._get_ego_pos()
-        dest_x, dest_y = self.dest[0], self.dest[1]
-        self.new_dist = np.linalg.norm((ego_x-dest_x, ego_y-dest_y))
+        self.new_dist = np.linalg.norm((ego_x-self.dest[0], ego_y-self.dest[1]))
 
         isDone = self._terminal()
         current_reward = self._get_reward()
@@ -183,117 +161,129 @@ class CarlaEnv(gym.Env):
         self.time_step += 1
         self.total_step += 1
         # print("time step %d" % self.time_step)
-        # speed = self.ego.get_velocity()
-        # print(speed.x, speed.y, speed.z)
 
         return (self._get_obs(), current_reward, isDone, copy.deepcopy(self.state_info))
 
+
     def reset(self):
-        # Clear sensor objects
-        self.camera_sensor = None
-        self.collision_sensor = None
-        self.lane_sensor = None
-
-        # Delete sensors, vehicles and walkers
-        for x in self.actors:
-            x.destroy()
-        self.actors = []
-
-        # Disable sync mode
-        self._set_synchronous_mode(False)
-
-        # Spawn the ego vehicle
-        ego_spawn_times = 0
         while True:
-            # print(ego_spawn_times)
-            if ego_spawn_times > self.max_ego_spawn_times:
-                self.reset()
+            try:
+                # Clear sensor objects
+                self.camera_sensor = None
+                self.collision_sensor = None
+                self.lane_sensor = None
 
-            if self.task_mode == 'Straight' or self.task_mode == 'One_curve':
-                # transform = random.choice(self.starts)  # formal
-                transform = self._set_carla_transform(self.start)
-            if self._try_spawn_ego_vehicle_at(transform):
-                break
-            else:
-                ego_spawn_times += 1
-                time.sleep(0.1)
-        # print("Ego car spawn Success!")
-        self.logger.info("Ego car spawn Success!")
+                # Delete sensors, vehicles and walkers
+                while self.actors:
+                    (self.actors.pop()).destroy()
 
-        # Add collision sensor
-        self.collision_sensor = self.world.spawn_actor(self.collision_bp, carla.Transform(), attach_to=self.ego)
-        self.actors.append(self.collision_sensor)
-        self.collision_sensor.listen(lambda event: get_collision_hist(event))
-        def get_collision_hist(event):
-            impulse = event.normal_impulse
-            intensity = np.sqrt(impulse.x**2 + impulse.y**2 + impulse.z**2)
-            self.collision_hist.append(intensity)
-            if len(self.collision_hist)>self.collision_hist_l:
-                self.collision_hist.pop(0)
-        self.collision_hist = []
+                # Disable sync mode
+                self._set_synchronous_mode(False)
 
-        # Add camera sensor
-        self.camera_sensor = self.world.spawn_actor(self.camera_bp, self.camera_trans, attach_to=self.ego)
-        self.actors.append(self.camera_sensor)
-        self.camera_sensor.listen(lambda data: get_camera_img(data))
-        def get_camera_img(data):
-            array = np.frombuffer(data.raw_data, dtype = np.dtype("uint8"))
-            array = np.reshape(array, (data.height, data.width, 4))
-            array = array[:, :, :3]
-            # array = array[:, :, ::-1]
-            self.camera_img = array
+                # Spawn the ego vehicle at a random position between start and dest
+                ego_spawn_times = 0
+                while True:
+                    if ego_spawn_times > self.max_ego_spawn_times:
+                        self.reset()
+                    if self.task_mode == 'Straight':
+                        transform = self._set_carla_transform(self.start)
+                        transform.location = self._get_random_position_between(self.start, self.dest)
+                    if self._try_spawn_ego_vehicle_at(transform):
+                        break
+                    else:
+                        ego_spawn_times += 1
+                        time.sleep(0.1)
+                # print("Ego car spawn Success!")
+                self.logger.info("Ego car spawn Success!")
 
-        # Add lane invasion sensor
-        self.lane_sensor = self.world.spawn_actor(self.lane_bp, carla.Transform(), attach_to=self.ego)
-        self.actors.append(self.lane_sensor)
-        self.lane_sensor.listen(lambda event: get_lane_invasion(event))
-        def get_lane_invasion(event):
-            self.lane_invasion_hist = event.crossed_lane_markings
-            # print("length of lane invasion: %d" % len(self.lane_invasion_hist))
-        self.lane_invasion_hist = []
+                # Add collision sensor
+                self.collision_sensor = self.world.try_spawn_actor(self.collision_bp, carla.Transform(), attach_to=self.ego)
+                self.actors.append(self.collision_sensor)
+                self.collision_sensor.listen(lambda event: get_collision_hist(event))
+                def get_collision_hist(event):
+                    impulse = event.normal_impulse
+                    intensity = np.sqrt(impulse.x**2 + impulse.y**2 + impulse.z**2)
+                    self.collision_hist.append(intensity)
+                    if len(self.collision_hist)>self.collision_hist_l:
+                        self.collision_hist.pop(0)
+                self.collision_hist = []
 
-        # Update timesteps
-        self.time_step=0
-        self.reset_step+=1
+                # Add camera sensor
+                self.camera_sensor = self.world.spawn_actor(self.camera_bp, self.camera_trans, attach_to=self.ego)
 
-        # Enable sync mode
-        self.settings.synchronous_mode = True
-        self.world.apply_settings(self.settings)
+                self.actors.append(self.camera_sensor)
+                self.camera_sensor.listen(lambda data: get_camera_img(data))
+                def get_camera_img(data):
+                    array = np.frombuffer(data.raw_data, dtype = np.dtype("uint8"))
+                    array = np.reshape(array, (data.height, data.width, 4))
+                    array = array[:, :, :3]
+                    self.camera_img = array
 
-        # Route teller
-        # TODO: Decide how to use route teller
-        directions = self._get_directions(self.ego.get_transform(), self.dest)
-        self.last_direction = directions
-        # print("command is %s" % self.instruction[self.last_direction])
+                # Add lane invasion sensor
+                self.lane_sensor = self.world.spawn_actor(self.lane_bp, carla.Transform(), attach_to=self.ego)
+                self.actors.append(self.lane_sensor)
+                self.lane_sensor.listen(lambda event: get_lane_invasion(event))
+                def get_lane_invasion(event):
+                    self.lane_invasion_hist = event.crossed_lane_markings
+                    # print("length of lane invasion: %d" % len(self.lane_invasion_hist))
+                self.lane_invasion_hist = []
 
-        ego_x, ego_y = self._get_ego_pos()
-        dest_x, dest_y = self.dest[0], self.dest[1]
-        self.last_dist = np.linalg.norm((ego_x-dest_x, ego_y-dest_y))
+                # Update timesteps
+                self.time_step=0
+                self.reset_step+=1
 
-        velocity = self.ego.get_velocity()
-        accel = self.ego.get_acceleration()
-        self.v_t = np.array([[velocity.x], [velocity.y]])
-        self.a_t = np.array([[accel.x], [accel.y]])
+                # Enable sync mode
+                self.settings.synchronous_mode = True
+                self.world.apply_settings(self.settings)
 
-        self.state_info['velocity_t'] = self.v_t
-        self.state_info['acceleration_t'] = self.a_t
-        self.state_info['dist_to_dest'] = self.last_dist
-        self.state_info['direction'] = command2Vector(self.last_direction)
+                # Route teller
+                directions = self._get_directions(self.ego.get_transform(), self.dest)
+                self.last_direction = directions
+                # print("command is %s" % self.instruction[self.last_direction])
 
-        # End State variable initialized
-        self.isCollided = False
-        self.isTimeOut = False
-        self.isSuccess = False
-        self.isOutOfLane = False
+                ego_x, ego_y = self._get_ego_pos()
+                dest_x, dest_y = self.dest[0], self.dest[1]
+                self.last_dist = np.linalg.norm((ego_x-dest_x, ego_y-dest_y))
 
-        return self._get_obs(), copy.deepcopy(self.state_info)
+                # Set the initial speed to desired speed
+                yaw = (self.ego.get_transform().rotation.yaw) * np.pi / 180.0
+                init_speed = carla.Vector3D(x=self.desired_speed * np.cos(yaw),
+                                            y=self.desired_speed * np.sin(yaw))
+                self.ego.set_velocity(init_speed)
+
+                # Get dynamics infomation
+                velocity = self.ego.get_velocity()
+                accel = self.ego.get_acceleration()
+                self.v_t = np.array([[velocity.x], [velocity.y]])
+                self.a_t = np.array([[accel.x], [accel.y]])
+
+                self.state_info['velocity_t'] = self.v_t
+                self.state_info['acceleration_t'] = self.a_t
+                self.state_info['dist_to_dest'] = self.last_dist
+                self.state_info['direction'] = command2Vector(self.last_direction)
+
+                # End State variable initialized
+                self.isCollided = False
+                self.isTimeOut = False
+                self.isSuccess = False
+                self.isOutOfLane = False
+                self.isSpecialSpeed = False
+
+                return self._get_obs(), copy.deepcopy(self.state_info)
+            except:
+                self.logger.error("Env reset() error")
+                time.sleep(2)
+                self._make_carla_client('localhost', self.port)
 
 
     def render(self, mode='human'):
         pass
 
+
     def close(self):
-        self.ego.destroy()
+        while self.actors:
+            (self.actors.pop()).destroy()
+
 
     def _terminal(self):
         """Calculate whether to terminate the current episode."""
@@ -303,14 +293,14 @@ class CarlaEnv(gym.Env):
         # If collides
         if len(self.collision_hist) > 0:
             # print("Collision happened! Episode Done.")
-            self.logger.info('Collision happened! Episode Done.')
+            self.logger.debug('Collision happened! Episode Done.')
             self.isCollided = True
             return True
 
         # If reach maximum timestep
         if self.time_step > self.max_time_episode:
             # print("Time out! Episode Done.")
-            self.logger.info('Time out! Episode Done.')
+            self.logger.debug('Time out! Episode Done.')
             self.isTimeOut = True
             return True
 
@@ -318,18 +308,31 @@ class CarlaEnv(gym.Env):
         dest = self.dest
         if np.sqrt((ego_x-dest[0])**2+(ego_y-dest[1])**2) < 2.0:
             # print("Get destination! Episode Done.")
-            self.logger.info('Get destination! Episode Done.')
+            self.logger.debug('Get destination! Episode Done.')
             self.isSuccess = True
             return True
 
         # If out of lane
         if len(self.lane_invasion_hist) > 0:
             # print("lane invasion happened! Episode Done.")
-            self.logger.info('lane invasion happened! Episode Done.')
+            self.logger.debug('Lane invasion happened! Episode Done.')
             self.isOutOfLane = True
             return True
 
+        # If speed is special
+        velocity = self.ego.get_velocity()
+        v_norm = np.linalg.norm(np.array((velocity.x, velocity.y)))
+        if v_norm < 3:
+            self.logger.debug("Speed too slow! Episode Done.")
+            self.isSpecialSpeed = True
+            return True
+        elif v_norm > 13:
+            self.logger.debug("Speed too fast! Episode Done.")
+            self.isSpecialSpeed = True
+            return True
+
         return False
+
 
     def _clear_all_actors(self, actor_filters):
         """Clear specific actors."""
@@ -339,6 +342,7 @@ class CarlaEnv(gym.Env):
                     if actor.type_id == 'controller.ai.walker' or actor.type_id == 'sensor.camera.rgb' or actor.type_id == 'sensor.other.collision':
                         actor.stop()
                     actor.destroy()
+
 
     def _create_vehicle_bluepprint(self, actor_filter, color=None, number_of_wheels=[4]):
         """Create the blueprint for a specific actor type.
@@ -360,34 +364,6 @@ class CarlaEnv(gym.Env):
             bp.set_attribute('color', color)
         return bp
 
-    def _get_actor_polygons(self, filt):
-        """Get the bounding box polygon of actors.
-
-        Args:
-            filt: the filter indicating what type of actors we'll look at.
-
-        Returns:
-            actor_poly_dict: a dictionary containing the bounding boxes of specific actors.
-        """
-        actor_poly_dict={}
-        for actor in self.world.get_actors().filter(filt):
-            # Get x, y and yaw of the actor
-            trans=actor.get_transform()
-            x=trans.location.x
-            y=trans.location.y
-            yaw=trans.rotation.yaw/180*np.pi
-            # Get length and width
-            bb=actor.bounding_box
-            l=bb.extent.x
-            w=bb.extent.y
-            # Get bounding box polygon in the actor's local coordinate
-            poly_local=np.array([[l,w],[l,-w],[-l,-w],[-l,w]]).transpose()
-            # Get rotation matrix to transform to global coordinate
-            R=np.array([[np.cos(yaw),-np.sin(yaw)],[np.sin(yaw),np.cos(yaw)]])
-            # Get global bounding box polygon
-            poly=np.matmul(R,poly_local).transpose()+np.repeat([[x,y]],4,axis=0)
-            actor_poly_dict[actor.id]=poly
-        return actor_poly_dict
 
     def _get_ego_pos(self):
         """Get the ego vehicle pose (x, y)."""
@@ -395,6 +371,7 @@ class CarlaEnv(gym.Env):
         ego_x = ego_trans.location.x
         ego_y = ego_trans.location.y
         return ego_x, ego_y
+
 
     def _set_carla_transform(self, pose):
         """Get a carla tranform object given pose.
@@ -414,11 +391,13 @@ class CarlaEnv(gym.Env):
         transform.rotation.yaw = pose[5]
         return transform
 
+
     def _set_synchronous_mode(self, synchronous = True):
         """Set whether to use the synchronous mode.
         """
         self.settings.synchronous_mode = synchronous
         self.world.apply_settings(self.settings)
+
 
     def _try_spawn_ego_vehicle_at(self, transform):
         """Try to spawn the ego vehicle at specific transform.
@@ -436,49 +415,6 @@ class CarlaEnv(gym.Env):
             return True
         return False
 
-    def _try_spawn_random_vehicle_at(self, transform, number_of_wheels=[4]):
-        """Try to spawn a surrounding vehicle at specific transform with random bluprint.
-
-        Args:
-            transform: the carla transform object.
-
-        Returns:
-            Bool indicating whether the spawn is successful.
-        """
-        blueprint = self._create_vehicle_bluepprint('vehicle.*', number_of_wheels=number_of_wheels)
-        blueprint.set_attribute('role_name', 'autopilot')
-        vehicle = self.world.try_spawn_actor(blueprint, transform)
-        if vehicle is not None:
-            vehicle.set_autopilot()
-            return True
-        return False
-
-    def _try_spawn_random_walker_at(self, transform):
-        """Try to spawn a walker at specific transform with random bluprint.
-
-        Args:
-            transform: the carla transform object.
-
-        Returns:
-            Bool indicating whether the spawn is successful.
-        """
-        walker_bp = random.choice(self.world.get_blueprint_library().filter('walker.*'))
-        # set as not invencible
-        if walker_bp.has_attribute('is_invincible'):
-            walker_bp.set_attribute('is_invincible', 'false')
-        walker_actor = self.world.try_spawn_actor(walker_bp, transform)
-
-        if walker_actor is not None:
-            walker_controller_bp = self.world.get_blueprint_library().find('controller.ai.walker')
-            walker_controller_actor = self.world.spawn_actor(walker_controller_bp, carla.Transform(), walker_actor)
-            # start walker
-            walker_controller_actor.start()
-            # set walk to random point
-            walker_controller_actor.go_to_location(self.world.get_random_location_from_navigation())
-            # random max speed
-            walker_controller_actor.set_max_speed(1 + random.random())    # max speed between 1 and 2 (default is 1.4 m/s)
-            return True
-        return False
 
     def _get_obs(self):
         current_obs = self.camera_img.copy()
@@ -486,6 +422,7 @@ class CarlaEnv(gym.Env):
         # cv2.waitKey(1)
         # self.world.tick()
         return current_obs / 255.0
+
 
     def _get_reward(self):
         """
@@ -501,40 +438,21 @@ class CarlaEnv(gym.Env):
         r_out = 0.0
         if len(self.lane_invasion_hist) > 0:
             r_out = -300.0
-        
-        # reward for time out
-        # reward for steering
-        r_steer = 0.0
-        if self.instruction[self.last_direction] == 'GO_STRATGHIT' or \
-                self.instruction[self.last_direction] == 'LANE_FOLLOW':
-            if abs(self.ego.get_control().steer) >= 0.2:
-                r_steer = -1.0
-        elif self.instruction[self.last_direction] == 'TURN_LEFT':
-            if self.ego.get_control().steer > 0:
-                r_steer = -1.0
-        elif self.instruction[self.last_direction] == 'TURN_RIGHT':
-            if self.ego.get_control().steer < 0:
-                r_steer = -1.0
 
-        # reward for speed tracking
-        r_speed = 0.0
-        v = self.ego.get_velocity()
-        speed = np.sqrt(v.x**2 + v.y**2)
-        if abs(speed - self.desired_speed) >= 3:
-            r_speed = -1.0
-
-        # reward for getting dest
-        r_dist = 0.0
-        last_dist = self.state_info['dist_to_dest']
-        delta_dist = last_dist - self.new_dist
-        if delta_dist <= 1e-2:
-            r_dist = -1.0
+        # reward for too far or too slow
+        r_speed = 0
+        if self.isSpecialSpeed:
+            r_speed = -300
+        else:
+            v = self.ego.get_velocity()
+            speed = np.sqrt(v.x**2 + v.y**2)
+            r_speed = -abs(speed - self.desired_speed) / 5.0
 
         r_success = 0.0
         if self.isSuccess:
-            r_success = 100
+            r_success = 300
 
-        return r_collision + r_out + r_steer + r_speed + r_dist + r_success
+        return r_collision + r_out + r_speed + r_success - 1
 
 
     def _get_directions(self, current_point, end_point):
@@ -551,7 +469,8 @@ class CarlaEnv(gym.Env):
             (end_point[0], end_point[1], 0.22),
             (end_point[3], end_point[4], end_point[5]))
         return directions
-    
+
+
     def _get_shortest_path(self, start_point, end_point):
 
         return self._planner.get_shortest_path_distance(
@@ -559,3 +478,40 @@ class CarlaEnv(gym.Env):
                 start_point.rotation.roll, start_point.rotation.pitch, current_point.rotation.yaw], [
                 end_point[0], end_point[1], 0.22], [
                 end_point[3], end_point[4], end_point[5]])
+
+
+    def _make_carla_client(self, host, port):
+        while True:
+            try:
+                self.logger.info("connecting to Carla server...")
+                self.client = carla.Client(host, port)
+                self.client.set_timeout(10.0)
+
+                if self.code_mode == 'train' or self.code_mode == 'eval':
+                    self.world = self.client.load_world('Town01')
+                    self._planner = Planner('Town01')
+                elif self.code_mode == 'test':
+                    self.world = self.client.load_world('Town02')
+                    self._planner = Planner('Town02')
+                
+                # Set weather
+                self.world.set_weather(carla.WeatherParameters.ClearNoon)
+                self.logger.info("Carla server port {} connected!".format(port))
+                break
+            except Exception:
+                self.logger.error('Fail to connect to carla-server...sleeping for 1')
+                time.sleep(1)
+
+    def _get_random_position_between(self, start, dest):
+        """
+        get a random carla position on the line between start and dest
+        """
+        s_x, s_y, s_z = start[0], start[1], start[2]
+        d_x, d_y, d_z = dest[0], dest[1], dest[2]
+
+        ratio = np.random.rand()
+        new_x = (d_x - s_x) * ratio + s_x
+        new_y = (d_y - s_y) * ratio + s_y
+        new_z = (d_z - s_z) * ratio + s_z
+
+        return carla.Location(x=new_x, y=new_y, z=new_z)
