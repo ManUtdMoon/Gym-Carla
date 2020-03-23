@@ -421,7 +421,7 @@ class CarlaEnv(gym.Env):
         # cv2.imshow("camera img", current_obs)
         # cv2.waitKey(1)
         # self.world.tick()
-        return current_obs / 255.0
+        return np.float32(current_obs / 255.0)
 
 
     def _get_reward(self):
