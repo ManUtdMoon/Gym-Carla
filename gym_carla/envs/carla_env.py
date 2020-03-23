@@ -56,14 +56,7 @@ class CarlaEnv(gym.Env):
             3.0: 'TURN_LEFT',4.0: 'TURN_RIGHT',5.0: 'GO_STRAIGHT'}
 
         # Start and Destination
-        if self.code_mode == 'train' or self.code_mode == 'eval':
-            # Town01
-            self.starts, self.dests = train_coordinates(self.task_mode)
-        elif self.code_mode == 'test':
-            pass
-            # Town02
-            # TODO: type in the data
-
+        self.starts, self.dests = train_coordinates(self.task_mode)
         self.start = self.starts[self.route_id]
         self.dest = self.dests[self.route_id]
 
@@ -186,8 +179,11 @@ class CarlaEnv(gym.Env):
                     if ego_spawn_times > self.max_ego_spawn_times:
                         self.reset()
                     if self.task_mode == 'Straight':
+                        # Code_mode == test or eval, spawn at start
                         transform = self._set_carla_transform(self.start)
-                        transform.location = self._get_random_position_between(self.start, self.dest)
+                        # Code_mode == train, spwan randomly between start and destination
+                        if self.code_mode == 'train':
+                            transform.location = self._get_random_position_between(self.start, self.dest)
                     if self._try_spawn_ego_vehicle_at(transform):
                         break
                     else:
@@ -442,17 +438,21 @@ class CarlaEnv(gym.Env):
         # reward for too far or too slow
         r_speed = 0
         if self.isSpecialSpeed:
-            r_speed = -300
+            r_speed = -300.0
         else:
             v = self.ego.get_velocity()
             speed = np.sqrt(v.x**2 + v.y**2)
-            r_speed = -abs(speed - self.desired_speed) / 5.0
+            r_speed = 1.0 - abs(speed - self.desired_speed) / 5.0
 
         r_success = 0.0
         if self.isSuccess:
-            r_success = 300
+            r_success = 300.0
 
-        return r_collision + r_out + r_speed + r_success - 1
+        # reward for steer
+        delta_yaw = self._get_delta_yaw()
+        r_steer = -5 * np.tan(delta_yaw * np.pi / 180)
+
+        return r_collision + r_out + r_speed + r_success + r_steer
 
 
     def _get_directions(self, current_point, end_point):
@@ -487,13 +487,11 @@ class CarlaEnv(gym.Env):
                 self.client = carla.Client(host, port)
                 self.client.set_timeout(10.0)
 
-                if self.code_mode == 'train' or self.code_mode == 'eval':
-                    self.world = self.client.load_world('Town01')
-                    self._planner = Planner('Town01')
-                elif self.code_mode == 'test':
-                    self.world = self.client.load_world('Town02')
-                    self._planner = Planner('Town02')
-                
+                # Set map
+                self.world = self.client.load_world('Town01')
+                self._planner = Planner('Town01')
+                self.map = self.world.get_map()
+
                 # Set weather
                 self.world.set_weather(carla.WeatherParameters.ClearNoon)
                 self.logger.info("Carla server port {} connected!".format(port))
@@ -515,3 +513,19 @@ class CarlaEnv(gym.Env):
         new_z = (d_z - s_z) * ratio + s_z
 
         return carla.Location(x=new_x, y=new_y, z=new_z)
+
+
+    def _get_delta_yaw(self):
+        """
+        calculate the delta yaw between ego and current waypoint
+        """
+        current_wpt = self.map.get_waypoint(location=self.ego.get_location())
+        if not current_wpt:
+            wpt_yaw = self.start[5]
+        else:
+            wpt_yaw = current_wpt.transform.rotation.yaw
+        ego_yaw = self.ego.get_transform().rotation.yaw
+        delta_yaw = abs(ego_yaw - wpt_yaw) % 360
+        delta_yaw = min(delta_yaw, 360-delta_yaw)
+
+        return delta_yaw

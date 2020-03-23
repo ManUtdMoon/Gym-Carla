@@ -21,7 +21,7 @@ def main():
         'port': 2000,  # connection port
         # 'town': 'Town01',  # which town to simulate
         'task_mode': 'Straight',  # mode of the task, [random, roundabout (only for Town03)]
-        'code_mode': 'train',
+        'code_mode': 'test',
         'max_time_episode': 5000,  # maximum timesteps per episode
         'desired_speed': 8,  # desired speed (m/s)
         'max_ego_spawn_times': 100,  # maximum times to spawn ego vehicle
@@ -30,6 +30,7 @@ def main():
     # Set gym-carla environment
     env = gym.make('carla-v0', params=params)
     obs = env.reset()
+    # print(env.ego.get_location())
     tic = time.time()
     done = False
     ret = 0
@@ -39,11 +40,11 @@ def main():
     while not done:
         tac = time.time()
         if tac - tic <= 10:
-            action = [0.0, 0.0]
+            action = [0.0, -0.]
         else:
             action = [0.0, 0.00]
         obs, r, done, info = env.step(action)
-        # print(info['velocity_t'])
+        
         ret += r
         cv2.imshow("camera img", obs)
         cv2.waitKey(1)
@@ -55,8 +56,11 @@ def main():
             toc = time.time()
             print("An episode took %f s" %(toc - tic))
             print("total reward is", ret)
+            print("time steps", env.time_step)
             env.close()
             env.reset()
+            ret = 0
+            # print(env.ego.get_location())
             done = False
             # break
 
