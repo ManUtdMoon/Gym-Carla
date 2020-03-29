@@ -64,7 +64,7 @@ class CarlaEnv(gym.Env):
         self.action_space = spaces.Box(np.array([-1.0, -1.0]),
             np.array([1.0, 1.0]), dtype=np.float32)
         self.state_space = spaces.Box(low=0.0, high=1.0,
-            shape=(self.obs_size, self.obs_size, 3), dtype=np.float32)
+            shape=(self.obs_size[1], self.obs_size[0], 3), dtype=np.float32)
 
         # Connect to carla server and get world object
         # print('connecting to Carla server...')
@@ -79,12 +79,12 @@ class CarlaEnv(gym.Env):
         self.collision_bp = self.world.get_blueprint_library().find('sensor.other.collision')
 
         # Add the bp of camera sensor
-        self.camera_img = np.zeros((self.obs_size, self.obs_size, 3), dtype=np.uint8)
-        self.camera_trans = carla.Transform(carla.Location(x=0.8, z=1.7))
+        self.camera_img = np.zeros((self.obs_size[0], self.obs_size[1], 3), dtype=np.uint8)
+        self.camera_trans = carla.Transform(carla.Location(x=1.8, z=1.5), carla.Rotation(pitch=-10))
         self.camera_bp = self.world.get_blueprint_library().find('sensor.camera.rgb')
         # Modify the attributes of the blueprint to set image resolution and field of view.
-        self.camera_bp.set_attribute('image_size_x', str(self.obs_size))
-        self.camera_bp.set_attribute('image_size_y', str(self.obs_size))
+        self.camera_bp.set_attribute('image_size_x', str(self.obs_size[0]))
+        self.camera_bp.set_attribute('image_size_y', str(self.obs_size[1]))
         self.camera_bp.set_attribute('fov', '110')
         # Set the time in seconds between sensor captures
         self.camera_bp.set_attribute('sensor_tick', '0.02')
@@ -190,7 +190,7 @@ class CarlaEnv(gym.Env):
                         ego_spawn_times += 1
                         time.sleep(0.1)
                 # print("Ego car spawn Success!")
-                self.logger.info("Ego car spawn Success!")
+                # self.logger.info("Ego car spawn Success!")
 
                 # Add collision sensor
                 self.collision_sensor = self.world.try_spawn_actor(self.collision_bp, carla.Transform(), attach_to=self.ego)

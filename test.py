@@ -15,11 +15,10 @@ def main():
     # parameters for the gym_carla environment
     params = {
         'display_size': 256,  # screen size of bird-eye render
-        'obs_size': 128,  # screen size of cv2 window
+        'obs_size': (160, 100),  # screen size of cv2 window  x@y = width @ height
         'dt': 0.1,  # time interval between two frames
         'ego_vehicle_filter': 'vehicle.lincoln*',  # filter for defining ego vehicle
         'port': 2000,  # connection port
-        # 'town': 'Town01',  # which town to simulate
         'task_mode': 'Straight',  # mode of the task, [random, roundabout (only for Town03)]
         'code_mode': 'test',
         'max_time_episode': 5000,  # maximum timesteps per episode
@@ -29,7 +28,8 @@ def main():
 
     # Set gym-carla environment
     env = gym.make('carla-v0', params=params)
-    obs = env.reset()
+    obs, info = env.reset()
+    print(obs.dtype)
     # print(env.ego.get_location())
     tic = time.time()
     done = False
