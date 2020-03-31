@@ -29,7 +29,7 @@ def main():
     # Set gym-carla environment
     env = gym.make('carla-v0', params=params)
     obs, info = env.reset()
-    print(obs.dtype)
+    # print(obs.dtype)
     # print(env.ego.get_location())
     tic = time.time()
     done = False
@@ -40,11 +40,11 @@ def main():
     while not done:
         tac = time.time()
         if tac - tic <= 10:
-            action = [0.0, -0.]
+            action = [-0, 1]
         else:
             action = [0.0, 0.00]
         obs, r, done, info = env.step(action)
-        
+        print(info['delta_yaw_t'], info['dyaw_dt_t'])
         ret += r
         cv2.imshow("camera img", obs)
         cv2.waitKey(1)

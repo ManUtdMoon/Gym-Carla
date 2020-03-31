@@ -135,6 +135,8 @@ class CarlaEnv(gym.Env):
         ego_x, ego_y = self._get_ego_pos()
         self.new_dist = np.linalg.norm((ego_x-self.dest[0], ego_y-self.dest[1]))
 
+        delta_yaw = self._get_delta_yaw()
+        dyaw_dt = self.ego.get_angular_velocity().z
         isDone = self._terminal()
         current_reward = self._get_reward()
         # print("reward of current state:", current_reward)
@@ -149,6 +151,8 @@ class CarlaEnv(gym.Env):
         self.state_info['direction'] = command2Vector(self.last_direction)
         self.state_info['velocity_t'] = self.v_t
         self.state_info['acceleration_t'] = self.a_t
+        self.state_info['delta_yaw_t'] = delta_yaw
+        self.state_info['dyaw_dt_t'] = dyaw_dt
 
         # Update timesteps
         self.time_step += 1
@@ -252,11 +256,15 @@ class CarlaEnv(gym.Env):
                 accel = self.ego.get_acceleration()
                 self.v_t = np.array([[velocity.x], [velocity.y]])
                 self.a_t = np.array([[accel.x], [accel.y]])
+                delta_yaw = self._get_delta_yaw()
+                dyaw_dt = self.ego.get_angular_velocity().z
 
                 self.state_info['velocity_t'] = self.v_t
                 self.state_info['acceleration_t'] = self.a_t
                 self.state_info['dist_to_dest'] = self.last_dist
                 self.state_info['direction'] = command2Vector(self.last_direction)
+                self.state_info['delta_yaw_t'] = delta_yaw
+                self.state_info['dyaw_dt_t'] = dyaw_dt
 
                 # End State variable initialized
                 self.isCollided = False
@@ -425,34 +433,25 @@ class CarlaEnv(gym.Env):
         calculate the reward of current state
         """
         # end state
-        # reward for collision
-        r_collision = 0.0
-        if len(self.collision_hist) > 0:
-            r_collision = -300.0
-
-        # reward for out of lane
-        r_out = 0.0
-        if len(self.lane_invasion_hist) > 0:
-            r_out = -300.0
-
-        # reward for too far or too slow
-        r_speed = 0
-        if self.isSpecialSpeed:
-            r_speed = -300.0
-        else:
-            v = self.ego.get_velocity()
-            speed = np.sqrt(v.x**2 + v.y**2)
-            r_speed = 1.0 - abs(speed - self.desired_speed) / 5.0
-
-        r_success = 0.0
+        # reward for done: collision/out/SpecislSPeed & Success
+        r_done = 0.0
+        if self.isCollided or self.isOutOfLane or self.isSpecialSpeed:
+            r_done = -300.0
         if self.isSuccess:
-            r_success = 300.0
+            r_done = 300.0
+
+        # reward for speed
+        v = self.ego.get_velocity()
+        speed = np.sqrt(v.x**2 + v.y**2)
+        delta_speed = speed - self.desired_speed
+        r_speed = 1.0 - delta_speed**2 / 25.0
+        # print(r_speed)
 
         # reward for steer
         delta_yaw = self._get_delta_yaw()
-        r_steer = -5 * np.tan(delta_yaw * np.pi / 180)
+        r_steer = -10 * (delta_yaw * np.pi / 180)**2
 
-        return r_collision + r_out + r_speed + r_success + r_steer
+        return r_done + r_speed + r_steer
 
 
     def _get_directions(self, current_point, end_point):
@@ -500,6 +499,7 @@ class CarlaEnv(gym.Env):
                 self.logger.error('Fail to connect to carla-server...sleeping for 1')
                 time.sleep(1)
 
+
     def _get_random_position_between(self, start, dest):
         """
         get a random carla position on the line between start and dest
@@ -521,11 +521,14 @@ class CarlaEnv(gym.Env):
         """
         current_wpt = self.map.get_waypoint(location=self.ego.get_location())
         if not current_wpt:
-            wpt_yaw = self.start[5]
+            wpt_yaw = self.start[5] % 360
         else:
-            wpt_yaw = current_wpt.transform.rotation.yaw
-        ego_yaw = self.ego.get_transform().rotation.yaw
-        delta_yaw = abs(ego_yaw - wpt_yaw) % 360
-        delta_yaw = min(delta_yaw, 360-delta_yaw)
+            wpt_yaw = current_wpt.transform.rotation.yaw % 360
+        ego_yaw = self.ego.get_transform().rotation.yaw % 360
+        delta_yaw = ego_yaw - wpt_yaw
+        if 180 <= delta_yaw and delta_yaw <= 360:
+            delta_yaw -= 360
+        elif -360 <= delta_yaw and delta_yaw <= -180:
+            delta_yaw += 360
 
         return delta_yaw
