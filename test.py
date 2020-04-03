@@ -10,6 +10,7 @@ import gym_carla
 import carla
 import cv2
 import time
+import numpy as np
 
 def main():
     # parameters for the gym_carla environment
@@ -40,11 +41,12 @@ def main():
     while not done:
         tac = time.time()
         if tac - tic <= 10:
-            action = [-0, 1]
+            # action = [0.0, 0.0]
+            action = np.random.uniform(low=-1, high=1, size=(2,))
         else:
             action = [0.0, 0.00]
         obs, r, done, info = env.step(action)
-        print(info['delta_yaw_t'], info['dyaw_dt_t'])
+        # print(info['delta_yaw_t'], info['dyaw_dt_t'])
         ret += r
         cv2.imshow("camera img", obs)
         cv2.waitKey(1)
@@ -58,10 +60,10 @@ def main():
             print("total reward is", ret)
             print("time steps", env.time_step)
             env.close()
-            env.reset()
+            # env.reset()
             ret = 0
             # print(env.ego.get_location())
-            done = False
+            # done = False
             # break
 
     # turn left

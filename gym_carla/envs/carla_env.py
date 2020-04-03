@@ -157,6 +157,7 @@ class CarlaEnv(gym.Env):
         # Update timesteps
         self.time_step += 1
         self.total_step += 1
+        self.last_action = self.current_action
         # print("time step %d" % self.time_step)
 
         return (self._get_obs(), current_reward, isDone, copy.deepcopy(self.state_info))
@@ -258,6 +259,10 @@ class CarlaEnv(gym.Env):
                 self.a_t = np.array([[accel.x], [accel.y]])
                 delta_yaw = self._get_delta_yaw()
                 dyaw_dt = self.ego.get_angular_velocity().z
+
+                # record the action of last time step
+                self.last_action = np.array([0.0, 0.0])
+                self.current_action = self.last_action.copy()
 
                 self.state_info['velocity_t'] = self.v_t
                 self.state_info['acceleration_t'] = self.a_t
@@ -451,7 +456,13 @@ class CarlaEnv(gym.Env):
         delta_yaw = self._get_delta_yaw()
         r_steer = -10 * (delta_yaw * np.pi / 180)**2
 
-        return r_done + r_speed + r_steer
+        # reward for action smoothness
+        current_action = self.ego.get_control()
+        self.current_action = np.array([current_action.throttle-current_action.brake, current_action.steer])
+        r_action_smooth = -0.5 * np.linalg.norm(self.current_action - self.last_action)
+        # print(self.last_action, '---->', self.current_action, r_action_smooth)
+
+        return r_done + r_speed + r_steer + r_action_smooth
 
 
     def _get_directions(self, current_point, end_point):
@@ -474,7 +485,7 @@ class CarlaEnv(gym.Env):
 
         return self._planner.get_shortest_path_distance(
             [   start_point.location.x, start_point.location.y, 0.22], [
-                start_point.rotation.roll, start_point.rotation.pitch, current_point.rotation.yaw], [
+                start_point.rotation.roll, start_point.rotation.pitch, start_point.rotation.yaw], [
                 end_point[0], end_point[1], 0.22], [
                 end_point[3], end_point[4], end_point[5]])
 
