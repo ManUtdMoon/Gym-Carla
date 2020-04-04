@@ -1,134 +1,92 @@
-2020-04-04 11:07:33 INFO     Env running in port 2000
-2020-04-04 11:07:34 INFO     connecting to Carla server...
-2020-04-04 11:07:42 INFO     Carla server port 2000 connected!
-2020-04-04 11:07:43 ERROR    Env reset() error
-2020-04-04 11:07:45 INFO     connecting to Carla server...
-2020-04-04 11:07:46 INFO     Carla server port 2000 connected!
-2020-04-04 11:07:46 ERROR    Env reset() error
-2020-04-04 11:07:48 INFO     connecting to Carla server...
-2020-04-04 11:07:50 INFO     Carla server port 2000 connected!
-2020-04-04 11:07:50 ERROR    Env reset() error
-2020-04-04 11:07:52 INFO     connecting to Carla server...
-2020-04-04 11:07:53 INFO     Carla server port 2000 connected!
-2020-04-04 11:07:53 ERROR    Env reset() error
-2020-04-04 11:07:55 INFO     connecting to Carla server...
-2020-04-04 11:10:05 INFO     Env running in port 2000
-2020-04-04 11:10:05 INFO     connecting to Carla server...
-2020-04-04 11:10:07 INFO     Carla server port 2000 connected!
-2020-04-04 11:10:10 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:10:12 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:10:15 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:10:18 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:10:21 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:10:24 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:10:27 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:10:29 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:10:32 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:10:35 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:10:38 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:10:41 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:10:44 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:10:46 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:10:49 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:11:22 INFO     Env running in port 2000
-2020-04-04 11:11:22 INFO     connecting to Carla server...
-2020-04-04 11:11:24 INFO     Carla server port 2000 connected!
-2020-04-04 11:11:27 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:11:29 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:11:32 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:11:35 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:11:38 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:11:41 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:11:58 INFO     Env running in port 2000
-2020-04-04 11:11:58 INFO     connecting to Carla server...
-2020-04-04 11:11:59 INFO     Carla server port 2000 connected!
-2020-04-04 11:12:02 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:12:05 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:12:08 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:12:11 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:12:13 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:12:31 INFO     Env running in port 2000
-2020-04-04 11:12:31 INFO     connecting to Carla server...
-2020-04-04 11:12:33 INFO     Carla server port 2000 connected!
-2020-04-04 11:12:36 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:12:38 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:12:41 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:12:44 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:12:47 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:12:50 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:12:53 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:12:55 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:12:58 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:13:01 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:13:04 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:13:07 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:13:09 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:13:12 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:13:15 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:13:18 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:13:21 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:13:23 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:13:26 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:13:29 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:13:32 DEBUG    Collision happened! Episode Done.
-2020-04-04 11:43:39 INFO     Env running in port 2000
-2020-04-04 11:43:39 INFO     connecting to Carla server...
-2020-04-04 11:43:40 INFO     Carla server port 2000 connected!
-2020-04-04 11:43:40 ERROR    Env reset() error
-2020-04-04 11:43:42 INFO     connecting to Carla server...
-2020-04-04 11:43:44 INFO     Carla server port 2000 connected!
-2020-04-04 11:43:44 ERROR    Env reset() error
-2020-04-04 11:43:46 INFO     connecting to Carla server...
-2020-04-04 11:43:47 INFO     Carla server port 2000 connected!
-2020-04-04 11:43:47 ERROR    Env reset() error
-2020-04-04 11:43:49 INFO     connecting to Carla server...
-2020-04-04 11:43:51 INFO     Carla server port 2000 connected!
-2020-04-04 11:43:51 ERROR    Env reset() error
-2020-04-04 11:43:53 INFO     connecting to Carla server...
-2020-04-04 11:45:11 INFO     Env running in port 2000
-2020-04-04 11:45:11 INFO     connecting to Carla server...
-2020-04-04 11:45:12 INFO     Carla server port 2000 connected!
-2020-04-04 11:46:12 INFO     Env running in port 2000
-2020-04-04 11:46:12 INFO     connecting to Carla server...
-2020-04-04 11:46:14 INFO     Carla server port 2000 connected!
-2020-04-04 11:47:11 INFO     Env running in port 2000
-2020-04-04 11:47:11 INFO     connecting to Carla server...
-2020-04-04 11:47:13 INFO     Carla server port 2000 connected!
-2020-04-04 11:48:40 INFO     Env running in port 2000
-2020-04-04 11:48:40 INFO     connecting to Carla server...
-2020-04-04 11:48:41 INFO     Carla server port 2000 connected!
-2020-04-04 11:49:15 INFO     Env running in port 2000
-2020-04-04 11:49:15 INFO     connecting to Carla server...
-2020-04-04 11:49:16 INFO     Carla server port 2000 connected!
-2020-04-04 11:49:49 INFO     Env running in port 2000
-2020-04-04 11:49:49 INFO     connecting to Carla server...
-2020-04-04 11:49:51 INFO     Carla server port 2000 connected!
-2020-04-04 11:50:31 INFO     Env running in port 2000
-2020-04-04 11:50:31 INFO     connecting to Carla server...
-2020-04-04 11:50:32 INFO     Carla server port 2000 connected!
-2020-04-04 11:53:29 INFO     Env running in port 2000
-2020-04-04 11:53:29 INFO     connecting to Carla server...
-2020-04-04 11:53:30 INFO     Carla server port 2000 connected!
-2020-04-04 11:55:18 INFO     Env running in port 2000
-2020-04-04 11:55:18 INFO     connecting to Carla server...
-2020-04-04 11:55:19 INFO     Carla server port 2000 connected!
-2020-04-04 11:55:47 INFO     Env running in port 2000
-2020-04-04 11:55:47 INFO     connecting to Carla server...
-2020-04-04 11:55:49 INFO     Carla server port 2000 connected!
-2020-04-04 11:56:22 INFO     Env running in port 2000
-2020-04-04 11:56:22 INFO     connecting to Carla server...
-2020-04-04 11:56:23 INFO     Carla server port 2000 connected!
-2020-04-04 11:58:59 INFO     Env running in port 2000
-2020-04-04 11:58:59 INFO     connecting to Carla server...
-2020-04-04 11:59:00 INFO     Carla server port 2000 connected!
-2020-04-04 11:59:32 INFO     Env running in port 2000
-2020-04-04 11:59:32 INFO     connecting to Carla server...
-2020-04-04 11:59:33 INFO     Carla server port 2000 connected!
-2020-04-04 12:00:21 INFO     Env running in port 2000
-2020-04-04 12:00:21 INFO     connecting to Carla server...
-2020-04-04 12:00:22 INFO     Carla server port 2000 connected!
-2020-04-04 12:00:32 DEBUG    Collision happened! Episode Done.
-2020-04-04 12:02:20 INFO     Env running in port 2000
-2020-04-04 12:02:20 INFO     connecting to Carla server...
-2020-04-04 12:02:21 INFO     Carla server port 2000 connected!
-2020-04-04 12:02:34 DEBUG    Collision happened! Episode Done.
+2020-04-04 15:30:31 INFO     Env running in port 2000
+2020-04-04 15:30:31 INFO     connecting to Carla server...
+2020-04-04 15:30:42 ERROR    Fail to connect to carla-server...sleeping for 1
+2020-04-04 15:30:43 INFO     connecting to Carla server...
+2020-04-04 15:30:53 ERROR    Fail to connect to carla-server...sleeping for 1
+2020-04-04 15:30:54 INFO     connecting to Carla server...
+2020-04-04 15:31:02 INFO     Carla server port 2000 connected!
+2020-04-04 15:31:40 DEBUG    Collision happened! Episode Done.
+2020-04-04 15:34:37 INFO     Env running in port 2000
+2020-04-04 15:34:37 INFO     connecting to Carla server...
+2020-04-04 15:34:38 INFO     Carla server port 2000 connected!
+2020-04-04 15:35:16 DEBUG    Collision happened! Episode Done.
+2020-04-04 15:36:53 INFO     Env running in port 2000
+2020-04-04 15:36:53 INFO     connecting to Carla server...
+2020-04-04 15:36:55 INFO     Carla server port 2000 connected!
+2020-04-04 15:37:32 DEBUG    Collision happened! Episode Done.
+2020-04-04 15:37:51 INFO     Env running in port 2000
+2020-04-04 15:37:51 INFO     connecting to Carla server...
+2020-04-04 15:37:52 INFO     Carla server port 2000 connected!
+2020-04-04 15:39:28 INFO     Env running in port 2000
+2020-04-04 15:39:28 INFO     connecting to Carla server...
+2020-04-04 15:39:29 INFO     Carla server port 2000 connected!
+2020-04-04 15:40:07 DEBUG    Collision happened! Episode Done.
+2020-04-04 15:40:57 INFO     Env running in port 2000
+2020-04-04 15:40:57 INFO     connecting to Carla server...
+2020-04-04 15:40:58 INFO     Carla server port 2000 connected!
+2020-04-04 15:41:35 DEBUG    Collision happened! Episode Done.
+2020-04-04 15:42:12 DEBUG    Collision happened! Episode Done.
+2020-04-04 15:42:46 INFO     Env running in port 2000
+2020-04-04 15:42:46 INFO     connecting to Carla server...
+2020-04-04 15:42:48 INFO     Carla server port 2000 connected!
+2020-04-04 15:43:07 INFO     Env running in port 2000
+2020-04-04 15:43:07 INFO     connecting to Carla server...
+2020-04-04 15:43:09 INFO     Carla server port 2000 connected!
+2020-04-04 15:43:21 DEBUG    Collision happened! Episode Done.
+2020-04-04 15:43:34 DEBUG    Collision happened! Episode Done.
+2020-04-04 15:43:47 DEBUG    Collision happened! Episode Done.
+2020-04-04 15:44:04 INFO     Env running in port 2000
+2020-04-04 15:44:04 INFO     connecting to Carla server...
+2020-04-04 15:44:06 INFO     Carla server port 2000 connected!
+2020-04-04 15:46:54 INFO     Env running in port 2000
+2020-04-04 15:46:54 INFO     connecting to Carla server...
+2020-04-04 15:46:55 INFO     Carla server port 2000 connected!
+2020-04-04 15:47:16 INFO     Env running in port 2000
+2020-04-04 15:47:16 INFO     connecting to Carla server...
+2020-04-04 15:47:17 INFO     Carla server port 2000 connected!
+2020-04-04 15:47:42 INFO     Env running in port 2000
+2020-04-04 15:47:42 INFO     connecting to Carla server...
+2020-04-04 15:47:43 INFO     Carla server port 2000 connected!
+2020-04-04 15:48:02 INFO     Env running in port 2000
+2020-04-04 15:48:02 INFO     connecting to Carla server...
+2020-04-04 15:48:03 INFO     Carla server port 2000 connected!
+2020-04-04 15:51:59 INFO     Env running in port 2000
+2020-04-04 15:51:59 INFO     connecting to Carla server...
+2020-04-04 15:52:00 INFO     Carla server port 2000 connected!
+2020-04-04 15:52:16 INFO     Env running in port 2000
+2020-04-04 15:52:16 INFO     connecting to Carla server...
+2020-04-04 15:52:18 INFO     Carla server port 2000 connected!
+2020-04-04 15:52:21 DEBUG    Collision happened! Episode Done.
+2020-04-04 15:52:24 DEBUG    Collision happened! Episode Done.
+2020-04-04 15:52:26 DEBUG    Collision happened! Episode Done.
+2020-04-04 15:52:29 DEBUG    Collision happened! Episode Done.
+2020-04-04 15:52:32 DEBUG    Collision happened! Episode Done.
+2020-04-04 15:52:35 DEBUG    Collision happened! Episode Done.
+2020-04-04 15:52:53 INFO     Env running in port 2000
+2020-04-04 15:52:53 INFO     connecting to Carla server...
+2020-04-04 15:52:54 INFO     Carla server port 2000 connected!
+2020-04-04 15:53:04 DEBUG    Collision happened! Episode Done.
+2020-04-04 15:53:13 DEBUG    Collision happened! Episode Done.
+2020-04-04 15:54:59 INFO     Env running in port 2000
+2020-04-04 15:54:59 INFO     connecting to Carla server...
+2020-04-04 15:55:00 INFO     Carla server port 2000 connected!
+2020-04-04 15:55:03 DEBUG    Collision happened! Episode Done.
+2020-04-04 15:55:06 DEBUG    Collision happened! Episode Done.
+2020-04-04 15:55:09 DEBUG    Collision happened! Episode Done.
+2020-04-04 15:55:18 DEBUG    Collision happened! Episode Done.
+2020-04-04 15:55:21 DEBUG    Collision happened! Episode Done.
+2020-04-04 15:55:23 DEBUG    Collision happened! Episode Done.
+2020-04-04 15:55:26 DEBUG    Collision happened! Episode Done.
+2020-04-04 15:55:35 DEBUG    Collision happened! Episode Done.
+2020-04-04 15:55:45 DEBUG    Collision happened! Episode Done.
+2020-04-04 15:55:54 DEBUG    Collision happened! Episode Done.
+2020-04-04 15:55:57 DEBUG    Collision happened! Episode Done.
+2020-04-04 15:56:30 INFO     Env running in port 2000
+2020-04-04 15:56:30 INFO     connecting to Carla server...
+2020-04-04 15:56:31 INFO     Carla server port 2000 connected!
+2020-04-04 15:56:41 DEBUG    Collision happened! Episode Done.
+2020-04-04 15:56:50 DEBUG    Collision happened! Episode Done.
+2020-04-04 15:56:59 DEBUG    Collision happened! Episode Done.
+2020-04-04 15:57:02 DEBUG    Collision happened! Episode Done.
+2020-04-04 15:57:11 DEBUG    Collision happened! Episode Done.
+2020-04-04 15:57:21 DEBUG    Collision happened! Episode Done.

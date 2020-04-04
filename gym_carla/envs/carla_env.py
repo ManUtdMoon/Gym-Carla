@@ -49,7 +49,6 @@ class CarlaEnv(gym.Env):
         self.obs_size = params['obs_size']
         self.desired_speed = params['desired_speed']
         self.max_ego_spawn_times = params['max_ego_spawn_times']
-        self.route_id = 0
 
         # used for debugging
         self.instruction = {0.0: 'REACH_GOAL', 2.0: 'LANE_FOLLOW',
@@ -57,8 +56,6 @@ class CarlaEnv(gym.Env):
 
         # Start and Destination
         self.starts, self.dests = train_coordinates(self.task_mode)
-        self.start = self.starts[self.route_id]
-        self.dest = self.dests[self.route_id]
 
         # action and observation space
         self.action_space = spaces.Box(np.array([-1.0, -1.0]),
@@ -178,6 +175,11 @@ class CarlaEnv(gym.Env):
                 self._set_synchronous_mode(False)
 
                 # Spawn the ego vehicle at a random position between start and dest
+                # TODO: route_id = self.port % 2
+                self.route_id = np.random.randint(low=0, high=2)
+                self.start = self.starts[self.route_id]
+                self.dest = self.dests[self.route_id]
+
                 ego_spawn_times = 0
                 while True:
                     if ego_spawn_times > self.max_ego_spawn_times:
