@@ -188,6 +188,8 @@ class CarlaEnv(gym.Env):
                         # Code_mode == train, spwan randomly between start and destination
                         if self.code_mode == 'train':
                             transform.location = self._get_random_position_between(self.start, self.dest)
+                    elif self.task_mode == 'One_curve':
+                        transform = self._set_carla_transform(self.start)
                     if self._try_spawn_ego_vehicle_at(transform):
                         break
                     else:
@@ -294,6 +296,14 @@ class CarlaEnv(gym.Env):
         # Get ego state
         ego_x, ego_y = self._get_ego_pos()
 
+        # If at destination
+        dest = self.dest
+        if np.sqrt((ego_x-dest[0])**2+(ego_y-dest[1])**2) < 2.0:
+            # print("Get destination! Episode Done.")
+            self.logger.debug('Get destination! Episode Done.')
+            self.isSuccess = True
+            return True
+
         # If collides
         if len(self.collision_hist) > 0:
             # print("Collision happened! Episode Done.")
@@ -308,32 +318,24 @@ class CarlaEnv(gym.Env):
             self.isTimeOut = True
             return True
 
-        # If at destination
-        dest = self.dest
-        if np.sqrt((ego_x-dest[0])**2+(ego_y-dest[1])**2) < 2.0:
-            # print("Get destination! Episode Done.")
-            self.logger.debug('Get destination! Episode Done.')
-            self.isSuccess = True
-            return True
-
         # If out of lane
-        if len(self.lane_invasion_hist) > 0:
-            # print("lane invasion happened! Episode Done.")
-            self.logger.debug('Lane invasion happened! Episode Done.')
-            self.isOutOfLane = True
-            return True
+        # if len(self.lane_invasion_hist) > 0:
+        #     # print("lane invasion happened! Episode Done.")
+        #     self.logger.debug('Lane invasion happened! Episode Done.')
+        #     self.isOutOfLane = True
+        #     return True
 
         # If speed is special
-        velocity = self.ego.get_velocity()
-        v_norm = np.linalg.norm(np.array((velocity.x, velocity.y)))
-        if v_norm < 3:
-            self.logger.debug("Speed too slow! Episode Done.")
-            self.isSpecialSpeed = True
-            return True
-        elif v_norm > 13:
-            self.logger.debug("Speed too fast! Episode Done.")
-            self.isSpecialSpeed = True
-            return True
+        # velocity = self.ego.get_velocity()
+        # v_norm = np.linalg.norm(np.array((velocity.x, velocity.y)))
+        # if v_norm < 3:
+        #     self.logger.debug("Speed too slow! Episode Done.")
+        #     self.isSpecialSpeed = True
+        #     return True
+        # elif v_norm > 13:
+        #     self.logger.debug("Speed too fast! Episode Done.")
+        #     self.isSpecialSpeed = True
+        #     return True
 
         return False
 

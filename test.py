@@ -19,10 +19,10 @@ def main():
         'dt': 0.1,  # time interval between two frames
         'ego_vehicle_filter': 'vehicle.lincoln*',  # filter for defining ego vehicle
         'port': 2000,  # connection port
-        'task_mode': 'Straight',  # mode of the task, [random, roundabout (only for Town03)]
+        'task_mode': 'One_curve',  # mode of the task, [random, roundabout (only for Town03)]
         'code_mode': 'test',
         'max_time_episode': 5000,  # maximum timesteps per episode
-        'desired_speed': 8,  # desired speed (m/s)
+        'desired_speed': 2,  # desired speed (m/s)
         'max_ego_spawn_times': 100,  # maximum times to spawn ego vehicle
     }
 
@@ -39,16 +39,25 @@ def main():
 
     while not done:
         tac = time.time()
+
         if tac - tic <= 10:
-            action = [-0, 1]
+            action = [-0, 0]
         else:
             action = [0.0, 0.00]
+
         obs, r, done, info = env.step(action)
-        print(info['delta_yaw_t'], info['dyaw_dt_t'])
+
+        if info['direction'][2][0]:
+            print('left')
+        elif info['direction'][3,0]:
+            print('right')
+        elif info['direction'][1, 0]:
+            print('lane follow')
+
         ret += r
         cv2.imshow("camera img", obs)
         cv2.waitKey(1)
-        # print(info['acceleration_t'].shape)
+
         env.world.debug.draw_point(start)
         env.world.debug.draw_point(end)
 
