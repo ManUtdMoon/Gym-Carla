@@ -47,6 +47,8 @@ class CarlaEnv(gym.Env):
         self.code_mode = params['code_mode']
         self.max_time_episode = params['max_time_episode']
         self.obs_size = params['obs_size']
+        self.state_size = (self.obs_size[0], self.obs_size[1] - 36)
+
         self.desired_speed = params['desired_speed']
         self.max_ego_spawn_times = params['max_ego_spawn_times']
         self.route_id = 0
@@ -64,7 +66,7 @@ class CarlaEnv(gym.Env):
         self.action_space = spaces.Box(np.array([-1.0, -1.0]),
             np.array([1.0, 1.0]), dtype=np.float32)
         self.state_space = spaces.Box(low=0.0, high=1.0,
-            shape=(self.obs_size[1], self.obs_size[0], 3), dtype=np.float32)
+            shape=(self.state_size[1], self.state_size[0], 3), dtype=np.float32)
 
         # Connect to carla server and get world object
         # print('connecting to Carla server...')
@@ -157,7 +159,7 @@ class CarlaEnv(gym.Env):
         # Update timesteps
         self.time_step += 1
         self.total_step += 1
-        self.last_action = self.current_action
+        # self.last_action = self.current_action
         # print("time step %d" % self.time_step)
 
         return (self._get_obs(), current_reward, isDone, copy.deepcopy(self.state_info))
@@ -261,8 +263,8 @@ class CarlaEnv(gym.Env):
                 dyaw_dt = self.ego.get_angular_velocity().z
 
                 # record the action of last time step
-                self.last_action = np.array([0.0, 0.0])
-                self.current_action = self.last_action.copy()
+                # self.last_action = np.array([0.0, 0.0])
+                # self.current_action = self.last_action.copy()
 
                 self.state_info['velocity_t'] = self.v_t
                 self.state_info['acceleration_t'] = self.a_t
@@ -426,7 +428,7 @@ class CarlaEnv(gym.Env):
 
 
     def _get_obs(self):
-        current_obs = self.camera_img.copy()
+        current_obs = self.camera_img[36:, :, :].copy()
         # cv2.imshow("camera img", current_obs)
         # cv2.waitKey(1)
         # self.world.tick()
@@ -459,7 +461,7 @@ class CarlaEnv(gym.Env):
         # reward for action smoothness
         current_action = self.ego.get_control()
         self.current_action = np.array([current_action.throttle-current_action.brake, current_action.steer])
-        r_action_smooth = -0.5 * np.linalg.norm(self.current_action - self.last_action)
+        r_action_smooth = - np.linalg.norm(self.current_action)**2
         # print(self.last_action, '---->', self.current_action, r_action_smooth)
 
         return r_done + r_speed + r_steer + r_action_smooth
