@@ -41,17 +41,18 @@ def main():
     while not done:
         tac = time.time()
         if tac - tic <= 10:
-            action = [0.0, 0.0]
-            # action = np.random.uniform(low=-0.1, high=0.1, size=(2,))
+            action = [0.0, 0]
+            # action = np.random.uniform(low=-0.5, high=0.5, size=(2,))
         else:
             action = [0.0, 0.00]
         obs, r, done, info = env.step(action)
+        # print(obs)
+
+        # print('delta', info['delta_yaw_t'], 'angular_speed', info['dyaw_dt_t'])
         # print(info['delta_yaw_t'], info['dyaw_dt_t'])
-        print(np.max(obs), np.min(obs))
+        # print(np.max(obs), np.min(obs))
         ret += r
-        cv2.imshow("camera img", obs)
-        cv2.waitKey(1)
-        # print(info['acceleration_t'].shape)
+
         env.world.debug.draw_point(start)
         env.world.debug.draw_point(end)
 
