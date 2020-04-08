@@ -23,6 +23,7 @@ from gym import spaces
 from gym.utils import seeding
 import carla
 import cv2
+import torch
 
 from .coordinates import train_coordinates
 from .misc import *
@@ -112,60 +113,87 @@ class CarlaEnv(gym.Env):
         # The tuple (x,y) for the current waypoint
         self.current_wpt = np.array((self.start[0], self.start[1]))
 
+        # TODO:[another kind of action]
+        self.last_action = np.array([0.0, 0.0])
 
     def step(self, action):
-        # Assign acc/steer/brake to action signal
-        throttle_or_brake, steer = action[0], action[1]
-        if throttle_or_brake >= 0:
-            throttle = throttle_or_brake
-            brake = 0
-        else:
-            throttle = 0
-            brake = -throttle_or_brake
 
-        # Apply control
-        act = carla.VehicleControl(throttle=float(throttle), steer=float(steer), brake=float(brake))
-        self.ego.apply_control(act)
+        try:
+            # Assign acc/steer/brake to action signal
+            # Ver. 1 input is the value of control signal
+            throttle_or_brake, steer = action[0], action[1]
+            if throttle_or_brake >= 0:
+                throttle = throttle_or_brake
+                brake = 0
+            else:
+                throttle = 0
+                brake = -throttle_or_brake
 
-        self.world.tick()
+            # Ver. 2 input is the delta value of control signal
+            # TODO:[another kind of action] change the action space to [-2, 2]
+            # delta_action = np.array(action)
+            # self.last_action = np.clip(self.last_action + delta_action, -1.0, 1.0, dtype=np.float32)
+            # throttle_or_brake, steer = self.last_action
 
-        # calculate reward
-        ego_x, ego_y = self._get_ego_pos()
-        self.new_dist = np.linalg.norm((ego_x-self.dest[0], ego_y-self.dest[1]))
+            # if throttle_or_brake >= 0:
+            #     throttle = throttle_or_brake
+            #     brake = 0
+            # else:
+            #     throttle = 0
+            #     brake = -throttle_or_brake
 
-        # Get waypoint infomation
-        self.current_wpt = self._get_waypoint_xy()
+            # Apply control
+            act = carla.VehicleControl(throttle=float(throttle), steer=float(steer), brake=float(brake))
+            self.ego.apply_control(act)
 
-        delta_yaw = self._get_delta_yaw()
-        dyaw_dt = self.ego.get_angular_velocity().z
-        isDone = self._terminal()
-        current_reward = self._get_reward()
-        # print("reward of current state:", current_reward)
+            self.world.tick()
 
-        # Update State Info (Necessary?)
-        velocity = self.ego.get_velocity()
-        accel = self.ego.get_acceleration()
-        self.v_t = np.array([[velocity.x], [velocity.y]])
-        self.a_t = np.array([[accel.x], [accel.y]])
+            # calculate reward
+            ego_x, ego_y = self._get_ego_pos()
+            self.new_dist = np.linalg.norm((ego_x-self.dest[0], ego_y-self.dest[1]))
 
-        self.state_info['velocity_t'] = self.v_t
-        self.state_info['acceleration_t'] = self.a_t
-        self.state_info['dist_to_dest'] = self.new_dist
-        self.state_info['delta_yaw_t'] = delta_yaw
-        self.state_info['dyaw_dt_t'] = dyaw_dt
-        self.state_info['lateral_dist_t'] = np.linalg.norm(self.current_wpt - np.array((ego_x, ego_y)))
+            # Get waypoint infomation
+            self.current_wpt = self._get_waypoint_xy()
 
-        # Update timesteps
-        self.time_step += 1
-        self.total_step += 1
-        # self.last_action = self.current_action
-        # print("time step %d" % self.time_step)
+            delta_yaw, _ = self._get_delta_yaw()
+            dyaw_dt = self.ego.get_angular_velocity().z
+            # print("reward of current state:", current_reward)
 
-        return (self._info2normalized_state_vector(), current_reward, isDone, copy.deepcopy(self.state_info))
+            # Update State Info (Necessary?)
+            velocity = self.ego.get_velocity()
+            accel = self.ego.get_acceleration()
+            self.v_t = np.array([[velocity.x], [velocity.y]])
+            self.a_t = np.array([[accel.x], [accel.y]])
+
+            self.state_info['velocity_t'] = self.v_t
+            self.state_info['acceleration_t'] = self.a_t
+            self.state_info['dist_to_dest'] = self.new_dist
+            self.state_info['delta_yaw_t'] = delta_yaw
+            self.state_info['dyaw_dt_t'] = dyaw_dt
+            self.state_info['lateral_dist_t'] = np.linalg.norm(self.current_wpt - np.array((ego_x, ego_y)))
+
+            isDone = self._terminal()
+            current_reward = self._get_reward()
+
+            # Update timesteps
+            self.time_step += 1
+            self.total_step += 1
+            # self.last_action = self.current_action
+            # print("time step %d" % self.time_step)
+
+            return (self._info2normalized_state_vector(), current_reward, isDone, copy.deepcopy(self.state_info))
+
+        except:
+            self.logger.error("Env step() error")
+            time.sleep(2)
+            return (self._info2normalized_state_vector(), 0.0, True, copy.deepcopy(self.state_info))
+
 
 
     def reset(self):
+
         while True:
+
             try:
                 # Clear sensor objects
                 # self.camera_sensor = None
@@ -252,7 +280,7 @@ class CarlaEnv(gym.Env):
                 accel = self.ego.get_acceleration()
                 self.v_t = np.array([[velocity.x], [velocity.y]])
                 self.a_t = np.array([[accel.x], [accel.y]])
-                delta_yaw = self._get_delta_yaw()
+                delta_yaw, _ = self._get_delta_yaw()
                 dyaw_dt = self.ego.get_angular_velocity().z
 
                 # Get waypoint infomation
@@ -273,6 +301,7 @@ class CarlaEnv(gym.Env):
                 self.isSpecialSpeed = False
 
                 return self._info2normalized_state_vector(), copy.deepcopy(self.state_info)
+
             except:
                 self.logger.error("Env reset() error")
                 time.sleep(2)
@@ -325,7 +354,7 @@ class CarlaEnv(gym.Env):
         # If speed is special
         velocity = self.ego.get_velocity()
         v_norm = np.linalg.norm(np.array((velocity.x, velocity.y)))
-        if v_norm < 3:
+        if v_norm < 4:
             self.logger.debug("Speed too slow! Episode Done.")
             self.isSpecialSpeed = True
             return True
@@ -433,7 +462,7 @@ class CarlaEnv(gym.Env):
         # end state
         # reward for done: collision/out/SpecislSPeed & Success
         r_done = 0.0
-        r_step = 3.0
+        r_step = 5.0
         if self.isCollided or self.isOutOfLane or self.isSpecialSpeed:
             r_step = 0.0
             r_done = -300.0
@@ -442,23 +471,34 @@ class CarlaEnv(gym.Env):
 
         # reward for speed
         v = self.ego.get_velocity()
-        speed = np.sqrt(v.x**2 + v.y**2)
-        delta_speed = speed - self.desired_speed
+        ego_velocity = np.array([v.x, v.y])
+        speed_norm = np.linalg.norm(ego_velocity)
+        delta_speed = speed_norm - self.desired_speed
         r_speed = -delta_speed**2 / 9.0
-        # print(r_speed)
+        print("r_speed:", speed_norm)
 
         # reward for steer
-        delta_yaw = self._get_delta_yaw()
+        delta_yaw, wpt_yaw = self._get_delta_yaw()
         r_steer = -100 * (delta_yaw * np.pi / 180)**2
-        # print(delta_yaw, '------>', r_steer)
+        # print("r_steer:", delta_yaw, '------>', r_steer)
 
         # reward for action smoothness
         current_action = self.ego.get_control()
-        current_action = np.array([current_action.throttle-current_action.brake, current_action.steer])
-        r_action_regularized = - 3 * np.linalg.norm(current_action)**2
-        # print(current_action, '------>', r_action_regularized)
+        r_action_regularized = - 5 * current_action.steer**2
+        # print("r_action:", current_action, '------>', r_action_regularized)
 
-        return r_done + r_speed + r_steer + r_action_regularized + r_step
+        # reward for lateral distance to the center of road
+        lateral_dist = self.state_info['lateral_dist_t']
+        r_lateral = - 3.0 * lateral_dist
+        # print("r_lateral:", lateral_dist, '-------->', r_lateral)
+
+        # reward for lateral velocity
+        road_heading_angle = np.array([np.cos(wpt_yaw/180*np.pi), np.sin(wpt_yaw/180*np.pi)])
+        v_lateral = ego_velocity - speed_norm * road_heading_angle
+        r_lateral_speed = -2 * np.linalg.norm(v_lateral)
+        # print(r_lateral_speed)
+
+        return r_done + r_speed + r_steer + r_action_regularized + r_lateral + r_lateral_speed + r_step
 
 
     def _make_carla_client(self, host, port):
@@ -477,8 +517,8 @@ class CarlaEnv(gym.Env):
                 self.logger.info("Carla server port {} connected!".format(port))
                 break
             except Exception:
-                self.logger.error('Fail to connect to carla-server...sleeping for 1')
-                time.sleep(1)
+                self.logger.error('Fail to connect to carla-server...sleeping for 2')
+                time.sleep(2)
 
 
     def _get_random_position_between(self, start, dest):
@@ -502,17 +542,20 @@ class CarlaEnv(gym.Env):
         """
         current_wpt = self.map.get_waypoint(location=self.ego.get_location())
         if not current_wpt:
+            self.logger.error('Fail to find a waypoint')
             wpt_yaw = self.start[5] % 360
         else:
             wpt_yaw = current_wpt.transform.rotation.yaw % 360
         ego_yaw = self.ego.get_transform().rotation.yaw % 360
+
         delta_yaw = ego_yaw - wpt_yaw
         if 180 <= delta_yaw and delta_yaw <= 360:
             delta_yaw -= 360
         elif -360 <= delta_yaw and delta_yaw <= -180:
             delta_yaw += 360
 
-        return delta_yaw
+        return delta_yaw, wpt_yaw
+
 
     def _get_waypoint_xy(self):
         """
