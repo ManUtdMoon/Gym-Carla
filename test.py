@@ -30,6 +30,7 @@ def main():
     # Set gym-carla environment
     env = gym.make('carla-v0', params=params)
     obs, info = env.reset()
+    # obs, r, done, info = env.step([0.0, 0.0])
     # print(obs.shape)
     # print(env.ego.get_location())
     tic = time.time()
@@ -41,13 +42,13 @@ def main():
     while not done:
         tac = time.time()
         if tac - tic <= 10:
-            action = [0.4, 0]
+            action = [0, 1]
             # throttle = np.random.rand(1) - 0.5
             # action = np.concatenate((throttle, np.random.uniform(low=-0.3, high=0.3, size=(1,))), axis=0)
         else:
             action = [0.0, 0.00]
+        print(obs[6])
         obs, r, done, info = env.step(action)
-        # print(obs)
 
         # print('delta', info['delta_yaw_t'], 'angular_speed', info['dyaw_dt_t'])
         # print(info['delta_yaw_t'], info['dyaw_dt_t'])

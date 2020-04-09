@@ -66,7 +66,7 @@ class CarlaEnv(gym.Env):
         # action and observation space
         self.action_space = spaces.Box(np.array([-1.0, -1.0]),
             np.array([1.0, 1.0]), dtype=np.float32)
-        self.state_space = spaces.Box(low=0.0, high=20.0,
+        self.state_space = spaces.Box(low=-20.0, high=20.0,
             shape=(8,), dtype=np.float32)
 
         # Connect to carla server and get world object
@@ -115,6 +115,7 @@ class CarlaEnv(gym.Env):
 
         # TODO:[another kind of action]
         self.last_action = np.array([0.0, 0.0])
+
 
     def step(self, action):
 
@@ -170,7 +171,8 @@ class CarlaEnv(gym.Env):
             self.state_info['dist_to_dest'] = self.new_dist
             self.state_info['delta_yaw_t'] = delta_yaw
             self.state_info['dyaw_dt_t'] = dyaw_dt
-            self.state_info['lateral_dist_t'] = np.linalg.norm(self.current_wpt - np.array((ego_x, ego_y)))
+            self.state_info['lateral_dist_t'] = np.linalg.norm(self.current_wpt - np.array((ego_x, ego_y))) *\
+                                                np.sign(ego_y-self.current_wpt[1])
 
             isDone = self._terminal()
             current_reward = self._get_reward()
@@ -291,7 +293,8 @@ class CarlaEnv(gym.Env):
                 self.state_info['dist_to_dest'] = self.last_dist
                 self.state_info['delta_yaw_t'] = delta_yaw
                 self.state_info['dyaw_dt_t'] = dyaw_dt
-                self.state_info['lateral_dist_t'] = np.linalg.norm(self.current_wpt - np.array((ego_x, ego_y)))
+                self.state_info['lateral_dist_t'] = np.linalg.norm(self.current_wpt - np.array((ego_x, ego_y))) *\
+                                                    np.sign(ego_y-self.current_wpt[1])
 
                 # End State variable initialized
                 self.isCollided = False
@@ -300,7 +303,10 @@ class CarlaEnv(gym.Env):
                 self.isOutOfLane = False
                 self.isSpecialSpeed = False
 
-                return self._info2normalized_state_vector(), copy.deepcopy(self.state_info)
+                state_vector, _, _, _ = self.step([0.0, 0.0])
+                state_vector, _, _, _ = self.step([0.0, 0.0])
+
+                return state_vector, copy.deepcopy(self.state_info)
 
             except:
                 self.logger.error("Env reset() error")
@@ -461,21 +467,21 @@ class CarlaEnv(gym.Env):
         """
         # end state
         # reward for done: collision/out/SpecislSPeed & Success
-        r_done = 0.0
         r_step = 5.0
         if self.isCollided or self.isOutOfLane or self.isSpecialSpeed:
-            r_step = 0.0
-            r_done = -300.0
+            r_done = -500.0
+            return r_done
         if self.isSuccess:
             r_done = 300.0
+            return r_done
 
         # reward for speed
         v = self.ego.get_velocity()
         ego_velocity = np.array([v.x, v.y])
         speed_norm = np.linalg.norm(ego_velocity)
         delta_speed = speed_norm - self.desired_speed
-        r_speed = -delta_speed**2 / 9.0
-        print("r_speed:", speed_norm)
+        r_speed = -delta_speed**2 / 8.0
+        # print("r_speed:", speed_norm)
 
         # reward for steer
         delta_yaw, wpt_yaw = self._get_delta_yaw()
@@ -489,16 +495,16 @@ class CarlaEnv(gym.Env):
 
         # reward for lateral distance to the center of road
         lateral_dist = self.state_info['lateral_dist_t']
-        r_lateral = - 3.0 * lateral_dist
+        r_lateral = - 5.0 * lateral_dist**2
         # print("r_lateral:", lateral_dist, '-------->', r_lateral)
 
         # reward for lateral velocity
-        road_heading_angle = np.array([np.cos(wpt_yaw/180*np.pi), np.sin(wpt_yaw/180*np.pi)])
-        v_lateral = ego_velocity - speed_norm * road_heading_angle
-        r_lateral_speed = -2 * np.linalg.norm(v_lateral)
+        # road_heading_angle = np.array([np.cos(wpt_yaw/180*np.pi), np.sin(wpt_yaw/180*np.pi)])
+        # v_lateral = ego_velocity - speed_norm * road_heading_angle
+        # r_lateral_speed = -2 * np.linalg.norm(v_lateral)**2
         # print(r_lateral_speed)
 
-        return r_done + r_speed + r_steer + r_action_regularized + r_lateral + r_lateral_speed + r_step
+        return r_speed + r_steer + r_action_regularized + r_lateral + r_step
 
 
     def _make_carla_client(self, host, port):
@@ -579,8 +585,8 @@ class CarlaEnv(gym.Env):
         velocity_t = self.state_info['velocity_t']
         accel_t = self.state_info['acceleration_t']
         dist_t = self.state_info['dist_to_dest'].reshape((1,1)) / 20.0
-        delta_yaw_t = np.array(self.state_info['delta_yaw_t']).reshape((1,1)) / 3.0
-        dyaw_dt_t = np.array(self.state_info['dyaw_dt_t']).reshape((1,1)) / 10.0
+        delta_yaw_t = np.array(self.state_info['delta_yaw_t']).reshape((1,1)) / 2.0
+        dyaw_dt_t = np.array(self.state_info['dyaw_dt_t']).reshape((1,1)) / 5.0
         lateral_dist_t = self.state_info['lateral_dist_t'].reshape((1,1)) * 10.0
 
         info_vec = np.concatenate([velocity_t, accel_t, dist_t, delta_yaw_t, dyaw_dt_t, lateral_dist_t], axis=0)
