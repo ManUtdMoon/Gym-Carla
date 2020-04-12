@@ -17,7 +17,7 @@ def main():
     params = {
         'display_size': 256,  # screen size of bird-eye render
         'obs_size': (160, 100),  # screen size of cv2 window  x@y = width @ height
-        'dt': 0.1,  # time interval between two frames
+        'dt': 0.025,  # time interval between two frames
         'ego_vehicle_filter': 'vehicle.lincoln*',  # filter for defining ego vehicle
         'port': 2000,  # connection port
         'task_mode': 'Straight',  # mode of the task, [random, roundabout (only for Town03)]
@@ -36,20 +36,21 @@ def main():
     tic = time.time()
     done = False
     ret = 0
+    count = 1
     start = carla.Location(x=env.start[0], y=env.start[1], z=0.22)
     end = carla.Location(x=env.dest[0], y=env.dest[1], z=0.22)
 
     while not done:
         tac = time.time()
         if tac - tic <= 10:
-            action = [0, 1]
+            action = [0.1, 0]
             # throttle = np.random.rand(1) - 0.5
             # action = np.concatenate((throttle, np.random.uniform(low=-0.3, high=0.3, size=(1,))), axis=0)
         else:
             action = [0.0, 0.00]
-        print(obs[6])
+        print(obs)
         obs, r, done, info = env.step(action)
-
+        count += 1
         # print('delta', info['delta_yaw_t'], 'angular_speed', info['dyaw_dt_t'])
         # print(info['delta_yaw_t'], info['dyaw_dt_t'])
         # print(np.max(obs), np.min(obs))

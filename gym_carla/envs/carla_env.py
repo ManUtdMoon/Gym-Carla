@@ -64,8 +64,8 @@ class CarlaEnv(gym.Env):
         self.dest = self.dests[self.route_id]
 
         # action and observation space
-        self.action_space = spaces.Box(np.array([-1.0, -1.0]),
-            np.array([1.0, 1.0]), dtype=np.float32)
+        self.action_space = spaces.Box(np.array([-2.0, -2.0]),
+            np.array([2.0, 2.0]), dtype=np.float32)
         self.state_space = spaces.Box(low=-20.0, high=20.0,
             shape=(8,), dtype=np.float32)
 
@@ -113,29 +113,13 @@ class CarlaEnv(gym.Env):
         # The tuple (x,y) for the current waypoint
         self.current_wpt = np.array((self.start[0], self.start[1]))
 
-        # TODO:[another kind of action]
-        self.last_action = np.array([0.0, 0.0])
-
 
     def step(self, action):
 
         try:
             # Assign acc/steer/brake to action signal
             # Ver. 1 input is the value of control signal
-            throttle_or_brake, steer = action[0], action[1]
-            if throttle_or_brake >= 0:
-                throttle = throttle_or_brake
-                brake = 0
-            else:
-                throttle = 0
-                brake = -throttle_or_brake
-
-            # Ver. 2 input is the delta value of control signal
-            # TODO:[another kind of action] change the action space to [-2, 2]
-            # delta_action = np.array(action)
-            # self.last_action = np.clip(self.last_action + delta_action, -1.0, 1.0, dtype=np.float32)
-            # throttle_or_brake, steer = self.last_action
-
+            # throttle_or_brake, steer = action[0], action[1]
             # if throttle_or_brake >= 0:
             #     throttle = throttle_or_brake
             #     brake = 0
@@ -143,11 +127,25 @@ class CarlaEnv(gym.Env):
             #     throttle = 0
             #     brake = -throttle_or_brake
 
+            # Ver. 2 input is the delta value of control signal
+            # TODO:[another kind of action] change the action space to [-2, 2]
+            current_action = np.array(action) + self.last_action
+            current_action = np.clip(current_action, -1.0, 1.0, dtype=np.float32)
+            throttle_or_brake, steer = current_action
+
+            if throttle_or_brake >= 0:
+                throttle = throttle_or_brake
+                brake = 0
+            else:
+                throttle = 0
+                brake = -throttle_or_brake
+
             # Apply control
             act = carla.VehicleControl(throttle=float(throttle), steer=float(steer), brake=float(brake))
             self.ego.apply_control(act)
 
-            self.world.tick()
+            for _ in range(4):
+                self.world.tick()
 
             # calculate reward
             ego_x, ego_y = self._get_ego_pos()
@@ -173,6 +171,7 @@ class CarlaEnv(gym.Env):
             self.state_info['dyaw_dt_t'] = dyaw_dt
             self.state_info['lateral_dist_t'] = np.linalg.norm(self.current_wpt - np.array((ego_x, ego_y))) *\
                                                 np.sign(ego_y-self.current_wpt[1])
+            self.state_info['action_t_1'] = self.last_action
 
             isDone = self._terminal()
             current_reward = self._get_reward()
@@ -180,7 +179,7 @@ class CarlaEnv(gym.Env):
             # Update timesteps
             self.time_step += 1
             self.total_step += 1
-            # self.last_action = self.current_action
+            self.last_action = current_action
             # print("time step %d" % self.time_step)
 
             return (self._info2normalized_state_vector(), current_reward, isDone, copy.deepcopy(self.state_info))
@@ -276,6 +275,8 @@ class CarlaEnv(gym.Env):
                 init_speed = carla.Vector3D(x=self.desired_speed * np.cos(yaw),
                                             y=self.desired_speed * np.sin(yaw))
                 self.ego.set_velocity(init_speed)
+                self.world.tick()
+                self.world.tick()
 
                 # Get dynamics infomation
                 velocity = self.ego.get_velocity()
@@ -288,6 +289,10 @@ class CarlaEnv(gym.Env):
                 # Get waypoint infomation
                 self.current_wpt = self._get_waypoint_xy()
 
+                # Reset action of last time step
+                # TODO:[another kind of action]
+                self.last_action = np.array([0.0, 0.0])
+
                 self.state_info['velocity_t'] = self.v_t
                 self.state_info['acceleration_t'] = self.a_t
                 self.state_info['dist_to_dest'] = self.last_dist
@@ -295,6 +300,7 @@ class CarlaEnv(gym.Env):
                 self.state_info['dyaw_dt_t'] = dyaw_dt
                 self.state_info['lateral_dist_t'] = np.linalg.norm(self.current_wpt - np.array((ego_x, ego_y))) *\
                                                     np.sign(ego_y-self.current_wpt[1])
+                self.state_info['action_t_1'] = self.last_action
 
                 # End State variable initialized
                 self.isCollided = False
@@ -303,10 +309,10 @@ class CarlaEnv(gym.Env):
                 self.isOutOfLane = False
                 self.isSpecialSpeed = False
 
-                state_vector, _, _, _ = self.step([0.0, 0.0])
-                state_vector, _, _, _ = self.step([0.0, 0.0])
+                # state_vector, _, _, _ = self.step([0.0, 0.0])
+                # state_vector, _, _, _ = self.step([0.0, 0.0])
 
-                return state_vector, copy.deepcopy(self.state_info)
+                return self._info2normalized_state_vector(), copy.deepcopy(self.state_info)
 
             except:
                 self.logger.error("Env reset() error")
@@ -495,7 +501,7 @@ class CarlaEnv(gym.Env):
 
         # reward for lateral distance to the center of road
         lateral_dist = self.state_info['lateral_dist_t']
-        r_lateral = - 5.0 * lateral_dist**2
+        r_lateral = - 10.0 * lateral_dist**2
         # print("r_lateral:", lateral_dist, '-------->', r_lateral)
 
         # reward for lateral velocity
@@ -580,7 +586,7 @@ class CarlaEnv(gym.Env):
         '''
         params: dict of ego state(velocity_t, accelearation_t, dist, command, delta_yaw_t, dyaw_dt_t)
         type: np.array
-        return: array of size[8,], torch.Tensor (v, a, d, delta_yaw, dyaw, d_lateral)
+        return: array of size[10,], torch.Tensor (v, a, d, delta_yaw, dyaw, d_lateral, action_last)
         '''
         velocity_t = self.state_info['velocity_t']
         accel_t = self.state_info['acceleration_t']
@@ -588,8 +594,11 @@ class CarlaEnv(gym.Env):
         delta_yaw_t = np.array(self.state_info['delta_yaw_t']).reshape((1,1)) / 2.0
         dyaw_dt_t = np.array(self.state_info['dyaw_dt_t']).reshape((1,1)) / 5.0
         lateral_dist_t = self.state_info['lateral_dist_t'].reshape((1,1)) * 10.0
+        action_last = self.state_info['action_t_1'].reshape((2, 1)) * 10.0
 
-        info_vec = np.concatenate([velocity_t, accel_t, dist_t, delta_yaw_t, dyaw_dt_t, lateral_dist_t], axis=0)
+        info_vec = np.concatenate([velocity_t, accel_t, dist_t,
+                                   delta_yaw_t, dyaw_dt_t, lateral_dist_t, action_last],
+                                   axis=0)
         info_vec = info_vec.squeeze()
 
         return  info_vec
