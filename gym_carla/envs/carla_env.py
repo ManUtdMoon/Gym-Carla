@@ -67,7 +67,7 @@ class CarlaEnv(gym.Env):
         self.action_space = spaces.Box(np.array([-2.0, -2.0]),
             np.array([2.0, 2.0]), dtype=np.float32)
         self.state_space = spaces.Box(low=-20.0, high=20.0,
-            shape=(8,), dtype=np.float32)
+            shape=(10,), dtype=np.float32)
 
         # Connect to carla server and get world object
         # print('connecting to Carla server...')
