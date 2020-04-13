@@ -54,10 +54,6 @@ class CarlaEnv(gym.Env):
         self.max_ego_spawn_times = params['max_ego_spawn_times']
         self.route_id = 0
 
-        # used for debugging
-        self.instruction = {0.0: 'REACH_GOAL', 2.0: 'LANE_FOLLOW',
-            3.0: 'TURN_LEFT',4.0: 'TURN_RIGHT',5.0: 'GO_STRAIGHT'}
-
         # Start and Destination
         self.starts, self.dests = train_coordinates(self.task_mode)
         self.start = self.starts[self.route_id]
@@ -66,8 +62,8 @@ class CarlaEnv(gym.Env):
         # action and observation space
         self.action_space = spaces.Box(np.array([-2.0, -2.0]),
             np.array([2.0, 2.0]), dtype=np.float32)
-        self.state_space = spaces.Box(low=-20.0, high=20.0,
-            shape=(10,), dtype=np.float32)
+        self.state_space = spaces.Box(low=0.0, high=1.0,
+            shape=(self.state_size[1], self.state_size[0], 3), dtype=np.float32)
 
         # Connect to carla server and get world object
         # print('connecting to Carla server...')
@@ -81,16 +77,16 @@ class CarlaEnv(gym.Env):
         self.collision_hist_l = 1 # collision history length
         self.collision_bp = self.world.get_blueprint_library().find('sensor.other.collision')
 
-        # # Add the bp of camera sensor
-        # self.camera_img = np.zeros((self.obs_size[0], self.obs_size[1], 3), dtype=np.uint8)
-        # self.camera_trans = carla.Transform(carla.Location(x=1.8, z=1.5), carla.Rotation(pitch=-10))
-        # self.camera_bp = self.world.get_blueprint_library().find('sensor.camera.rgb')
-        # # Modify the attributes of the blueprint to set image resolution and field of view.
-        # self.camera_bp.set_attribute('image_size_x', str(self.obs_size[0]))
-        # self.camera_bp.set_attribute('image_size_y', str(self.obs_size[1]))
-        # self.camera_bp.set_attribute('fov', '110')
-        # # Set the time in seconds between sensor captures
-        # self.camera_bp.set_attribute('sensor_tick', '0.02')
+        # Add the bp of camera sensor
+        self.camera_img = np.zeros((self.obs_size[0], self.obs_size[1], 3), dtype=np.uint8)
+        self.camera_trans = carla.Transform(carla.Location(x=1.8, z=1.5), carla.Rotation(pitch=-10))
+        self.camera_bp = self.world.get_blueprint_library().find('sensor.camera.rgb')
+        # Modify the attributes of the blueprint to set image resolution and field of view.
+        self.camera_bp.set_attribute('image_size_x', str(self.obs_size[0]))
+        self.camera_bp.set_attribute('image_size_y', str(self.obs_size[1]))
+        self.camera_bp.set_attribute('fov', '110')
+        # Set the time in seconds between sensor captures
+        self.camera_bp.set_attribute('sensor_tick', '0.025')
 
         # Lane Invasion Sensor
         self.lane_bp = self.world.get_blueprint_library().find('sensor.other.lane_invasion')
@@ -182,12 +178,12 @@ class CarlaEnv(gym.Env):
             self.last_action = current_action
             # print("time step %d" % self.time_step)
 
-            return (self._info2normalized_state_vector(), current_reward, isDone, copy.deepcopy(self.state_info))
+            return (self._get_obs(), current_reward, isDone, self._info2normalized_state_vector())
 
         except:
             self.logger.error("Env step() error")
             time.sleep(2)
-            return (self._info2normalized_state_vector(), 0.0, True, copy.deepcopy(self.state_info))
+            return (np.zeros((64, 160, 3), dtype=np.float32), 0.0, True, self._info2normalized_state_vector())
 
 
 
@@ -197,7 +193,7 @@ class CarlaEnv(gym.Env):
 
             try:
                 # Clear sensor objects
-                # self.camera_sensor = None
+                self.camera_sensor = None
                 self.collision_sensor = None
                 self.lane_sensor = None
 
@@ -240,14 +236,14 @@ class CarlaEnv(gym.Env):
                 self.collision_hist = []
 
                 # Add camera sensor
-                # self.camera_sensor = self.world.spawn_actor(self.camera_bp, self.camera_trans, attach_to=self.ego)
-                # self.actors.append(self.camera_sensor)
-                # self.camera_sensor.listen(lambda data: get_camera_img(data))
-                # def get_camera_img(data):
-                #     array = np.frombuffer(data.raw_data, dtype = np.dtype("uint8"))
-                #     array = np.reshape(array, (data.height, data.width, 4))
-                #     array = array[:, :, :3]
-                #     self.camera_img = array
+                self.camera_sensor = self.world.spawn_actor(self.camera_bp, self.camera_trans, attach_to=self.ego)
+                self.actors.append(self.camera_sensor)
+                self.camera_sensor.listen(lambda data: get_camera_img(data))
+                def get_camera_img(data):
+                    array = np.frombuffer(data.raw_data, dtype = np.dtype("uint8"))
+                    array = np.reshape(array, (data.height, data.width, 4))
+                    array = array[:, :, :3]
+                    self.camera_img = array
 
                 # Add lane invasion sensor
                 self.lane_sensor = self.world.spawn_actor(self.lane_bp, carla.Transform(), attach_to=self.ego)
@@ -312,7 +308,7 @@ class CarlaEnv(gym.Env):
                 # state_vector, _, _, _ = self.step([0.0, 0.0])
                 # state_vector, _, _, _ = self.step([0.0, 0.0])
 
-                return self._info2normalized_state_vector(), copy.deepcopy(self.state_info)
+                return self._get_obs(), self._info2normalized_state_vector()
 
             except:
                 self.logger.error("Env reset() error")
@@ -462,9 +458,8 @@ class CarlaEnv(gym.Env):
 
     def _get_obs(self):
         # TODO: switch to vector version
-        # current_obs = self.camera_img[36:, :, :].copy()
-        pass
-        # return np.float32(current_obs / 255.0)
+        current_obs = self.camera_img[36:, :, :].copy()
+        return np.float32(current_obs / 255.0)
 
 
     def _get_reward(self):
@@ -586,19 +581,19 @@ class CarlaEnv(gym.Env):
         '''
         params: dict of ego state(velocity_t, accelearation_t, dist, command, delta_yaw_t, dyaw_dt_t)
         type: np.array
-        return: array of size[10,], torch.Tensor (v, a, d, delta_yaw, dyaw, d_lateral, action_last)
+        return: array of size[8,], torch.Tensor (v, a, d, dyaw, action_last)
+            remove delta_yaw & lateral_dist [from vectorized state version]
         '''
         velocity_t = self.state_info['velocity_t']
         accel_t = self.state_info['acceleration_t']
         dist_t = self.state_info['dist_to_dest'].reshape((1,1)) / 20.0
-        delta_yaw_t = np.array(self.state_info['delta_yaw_t']).reshape((1,1)) / 2.0
+        # delta_yaw_t = np.array(self.state_info['delta_yaw_t']).reshape((1,1)) / 2.0
         dyaw_dt_t = np.array(self.state_info['dyaw_dt_t']).reshape((1,1)) / 5.0
-        lateral_dist_t = self.state_info['lateral_dist_t'].reshape((1,1)) * 10.0
+        # lateral_dist_t = self.state_info['lateral_dist_t'].reshape((1,1)) * 10.0
         action_last = self.state_info['action_t_1'].reshape((2, 1)) * 10.0
 
         info_vec = np.concatenate([velocity_t, accel_t, dist_t,
-                                   delta_yaw_t, dyaw_dt_t, lateral_dist_t, action_last],
-                                   axis=0)
+                                   dyaw_dt_t, action_last], axis=0)
         info_vec = info_vec.squeeze()
 
         return  info_vec

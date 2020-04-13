@@ -43,12 +43,14 @@ def main():
     while not done:
         tac = time.time()
         if tac - tic <= 10:
-            action = [0.1, 0]
+            action = [0.0, 0.02]
             # throttle = np.random.rand(1) - 0.5
             # action = np.concatenate((throttle, np.random.uniform(low=-0.3, high=0.3, size=(1,))), axis=0)
         else:
             action = [0.0, 0.00]
-        print(obs)
+        cv2.imshow('img', obs)
+        cv2.waitKey(1)
+        print(info)
         obs, r, done, info = env.step(action)
         count += 1
         # print('delta', info['delta_yaw_t'], 'angular_speed', info['dyaw_dt_t'])
