@@ -43,12 +43,15 @@ def main():
     while not done:
         tac = time.time()
         if tac - tic <= 10:
-            action = [0.1, 0]
+            action = [0.0, 1]
             # throttle = np.random.rand(1) - 0.5
             # action = np.concatenate((throttle, np.random.uniform(low=-0.3, high=0.3, size=(1,))), axis=0)
         else:
             action = [0.0, 0.00]
-        print(obs)
+        print(obs[0:4])
+        print(obs[4]*20, obs[5]*2, obs[6]*5, obs[7]/10)
+        print(obs[8:10]/10)
+        print('--------------------------------')
         obs, r, done, info = env.step(action)
         count += 1
         # print('delta', info['delta_yaw_t'], 'angular_speed', info['dyaw_dt_t'])

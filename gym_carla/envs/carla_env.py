@@ -26,7 +26,7 @@ import cv2
 import torch
 
 from .coordinates import train_coordinates
-from .misc import *
+from .misc import _vec_decompose
 from .carla_logger import *
 
 # REACH_GOAL = 0.0
@@ -153,24 +153,31 @@ class CarlaEnv(gym.Env):
 
             # Get waypoint infomation
             self.current_wpt = self._get_waypoint_xy()
-
-            delta_yaw, _ = self._get_delta_yaw()
             dyaw_dt = self.ego.get_angular_velocity().z
-            # print("reward of current state:", current_reward)
+
+            delta_yaw, wpt_yaw = self._get_delta_yaw()
+            road_direction = np.array([np.cos(wpt_yaw/180*np.pi), np.sin(wpt_yaw/180*np.pi)])
 
             # Update State Info (Necessary?)
             velocity = self.ego.get_velocity()
             accel = self.ego.get_acceleration()
-            self.v_t = np.array([[velocity.x], [velocity.y]])
-            self.a_t = np.array([[accel.x], [accel.y]])
+            v_t_absolute = np.array([velocity.x, velocity.y])
+            a_t_absolute = np.array([accel.x, accel.y])
 
-            self.state_info['velocity_t'] = self.v_t
-            self.state_info['acceleration_t'] = self.a_t
+            # decompose v and a to tangential and normal
+            v_t = _vec_decompose(v_t_absolute, road_direction)
+            a_t = _vec_decompose(a_t_absolute, road_direction)
+
+            pos_err_vec = np.array((ego_x, ego_y)) - self.current_wpt
+
+            self.state_info['velocity_t'] = v_t
+            self.state_info['acceleration_t'] = a_t
             self.state_info['dist_to_dest'] = self.new_dist
             self.state_info['delta_yaw_t'] = delta_yaw
             self.state_info['dyaw_dt_t'] = dyaw_dt
-            self.state_info['lateral_dist_t'] = np.linalg.norm(self.current_wpt - np.array((ego_x, ego_y))) *\
-                                                np.sign(ego_y-self.current_wpt[1])
+            self.state_info['lateral_dist_t'] = np.linalg.norm(pos_err_vec) * \
+                                                np.sign(pos_err_vec[0] * road_direction[1] - \
+                                                        pos_err_vec[1] * road_direction[0])
             self.state_info['action_t_1'] = self.last_action
 
             isDone = self._terminal()
@@ -266,10 +273,6 @@ class CarlaEnv(gym.Env):
                 self.settings.synchronous_mode = True
                 self.world.apply_settings(self.settings)
 
-                ego_x, ego_y = self._get_ego_pos()
-                dest_x, dest_y = self.dest[0], self.dest[1]
-                self.last_dist = np.linalg.norm((ego_x-dest_x, ego_y-dest_y))
-
                 # Set the initial speed to desired speed
                 yaw = (self.ego.get_transform().rotation.yaw) * np.pi / 180.0
                 init_speed = carla.Vector3D(x=self.desired_speed * np.cos(yaw),
@@ -278,28 +281,40 @@ class CarlaEnv(gym.Env):
                 self.world.tick()
                 self.world.tick()
 
-                # Get dynamics infomation
-                velocity = self.ego.get_velocity()
-                accel = self.ego.get_acceleration()
-                self.v_t = np.array([[velocity.x], [velocity.y]])
-                self.a_t = np.array([[accel.x], [accel.y]])
-                delta_yaw, _ = self._get_delta_yaw()
+                # Get waypoint infomation
+                ego_x, ego_y = self._get_ego_pos()
+                dest_x, dest_y = self.dest[0], self.dest[1]
+                self.last_dist = np.linalg.norm((ego_x-dest_x, ego_y-dest_y))
+                self.current_wpt = self._get_waypoint_xy()
                 dyaw_dt = self.ego.get_angular_velocity().z
 
-                # Get waypoint infomation
-                self.current_wpt = self._get_waypoint_xy()
+                delta_yaw, wpt_yaw = self._get_delta_yaw()
+                road_direction = np.array([np.cos(wpt_yaw/180*np.pi), np.sin(wpt_yaw/180*np.pi)])
+
+                # Update State Info (Necessary?)
+                velocity = self.ego.get_velocity()
+                accel = self.ego.get_acceleration()
+                v_t_absolute = np.array([velocity.x, velocity.y])
+                a_t_absolute = np.array([accel.x, accel.y])
+
+                # decompose v and a to tangential and normal
+                v_t = _vec_decompose(v_t_absolute, road_direction)
+                a_t = _vec_decompose(a_t_absolute, road_direction)
 
                 # Reset action of last time step
                 # TODO:[another kind of action]
                 self.last_action = np.array([0.0, 0.0])
 
-                self.state_info['velocity_t'] = self.v_t
-                self.state_info['acceleration_t'] = self.a_t
+                pos_err_vec = np.array((ego_x, ego_y)) - self.current_wpt
+
+                self.state_info['velocity_t'] = v_t
+                self.state_info['acceleration_t'] = a_t
                 self.state_info['dist_to_dest'] = self.last_dist
                 self.state_info['delta_yaw_t'] = delta_yaw
                 self.state_info['dyaw_dt_t'] = dyaw_dt
-                self.state_info['lateral_dist_t'] = np.linalg.norm(self.current_wpt - np.array((ego_x, ego_y))) *\
-                                                    np.sign(ego_y-self.current_wpt[1])
+                self.state_info['lateral_dist_t'] = np.linalg.norm(pos_err_vec) * \
+                                                    np.sign(pos_err_vec[0] * road_direction[1] - \
+                                                            pos_err_vec[1] * road_direction[0])
                 self.state_info['action_t_1'] = self.last_action
 
                 # End State variable initialized
@@ -590,11 +605,11 @@ class CarlaEnv(gym.Env):
         '''
         velocity_t = self.state_info['velocity_t']
         accel_t = self.state_info['acceleration_t']
-        dist_t = self.state_info['dist_to_dest'].reshape((1,1)) / 20.0
-        delta_yaw_t = np.array(self.state_info['delta_yaw_t']).reshape((1,1)) / 2.0
-        dyaw_dt_t = np.array(self.state_info['dyaw_dt_t']).reshape((1,1)) / 5.0
-        lateral_dist_t = self.state_info['lateral_dist_t'].reshape((1,1)) * 10.0
-        action_last = self.state_info['action_t_1'].reshape((2, 1)) * 10.0
+        dist_t = self.state_info['dist_to_dest'].reshape((1,)) / 20.0
+        delta_yaw_t = np.array(self.state_info['delta_yaw_t']).reshape((1,)) / 2.0
+        dyaw_dt_t = np.array(self.state_info['dyaw_dt_t']).reshape((1,)) / 5.0
+        lateral_dist_t = self.state_info['lateral_dist_t'].reshape((1,)) * 10.0
+        action_last = self.state_info['action_t_1'] * 10.0
 
         info_vec = np.concatenate([velocity_t, accel_t, dist_t,
                                    delta_yaw_t, dyaw_dt_t, lateral_dist_t, action_last],
