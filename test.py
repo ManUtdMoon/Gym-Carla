@@ -20,7 +20,7 @@ def main():
         'dt': 0.025,  # time interval between two frames
         'ego_vehicle_filter': 'vehicle.lincoln*',  # filter for defining ego vehicle
         'port': 2000,  # connection port
-        'task_mode': 'Straight',  # mode of the task, [random, roundabout (only for Town03)]
+        'task_mode': 'Curve',  # mode of the task, [random, roundabout (only for Town03)]
         'code_mode': 'test',
         'max_time_episode': 5000,  # maximum timesteps per episode
         'desired_speed': 8,  # desired speed (m/s)
@@ -29,6 +29,12 @@ def main():
 
     # Set gym-carla environment
     env = gym.make('carla-v0', params=params)
+    start = carla.Location(x=env.start[0], y=env.start[1], z=0.22)
+    end = carla.Location(x=env.dest[0], y=env.dest[1], z=0.22)
+    print(env.map.get_waypoint(location=end))
+    env.world.debug.draw_point(start)
+    env.world.debug.draw_point(end)
+
     obs, info = env.reset()
     # obs, r, done, info = env.step([0.0, 0.0])
     # print(obs.shape)
@@ -37,13 +43,11 @@ def main():
     done = False
     ret = 0
     count = 1
-    start = carla.Location(x=env.start[0], y=env.start[1], z=0.22)
-    end = carla.Location(x=env.dest[0], y=env.dest[1], z=0.22)
 
     while not done:
         tac = time.time()
         if tac - tic <= 10:
-            action = [0.0, 1]
+            action = [0.0, 0]
             # throttle = np.random.rand(1) - 0.5
             # action = np.concatenate((throttle, np.random.uniform(low=-0.3, high=0.3, size=(1,))), axis=0)
         else:

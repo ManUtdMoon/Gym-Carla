@@ -52,7 +52,7 @@ class CarlaEnv(gym.Env):
 
         self.desired_speed = params['desired_speed']
         self.max_ego_spawn_times = params['max_ego_spawn_times']
-        self.route_id = 0
+        self.route_id = 1
 
         # used for debugging
         self.instruction = {0.0: 'REACH_GOAL', 2.0: 'LANE_FOLLOW',
@@ -220,12 +220,12 @@ class CarlaEnv(gym.Env):
                 while True:
                     if ego_spawn_times > self.max_ego_spawn_times:
                         self.reset()
-                    if self.task_mode == 'Straight':
+                    # if self.task_mode == 'Straight':
                         # Code_mode == test or eval, spawn at start
-                        transform = self._set_carla_transform(self.start)
+                    transform = self._set_carla_transform(self.start)
                         # Code_mode == train, spwan randomly between start and destination
-                        if self.code_mode == 'train':
-                            transform.location = self._get_random_position_between(self.start, self.dest)
+                    if self.code_mode == 'train':
+                        transform.location = self._get_random_position_between(self.start, self.dest)
                     if self._try_spawn_ego_vehicle_at(transform):
                         break
                     else:
@@ -274,10 +274,10 @@ class CarlaEnv(gym.Env):
                 self.world.apply_settings(self.settings)
 
                 # Set the initial speed to desired speed
-                yaw = (self.ego.get_transform().rotation.yaw) * np.pi / 180.0
-                init_speed = carla.Vector3D(x=self.desired_speed * np.cos(yaw),
-                                            y=self.desired_speed * np.sin(yaw))
-                self.ego.set_velocity(init_speed)
+                # yaw = (self.ego.get_transform().rotation.yaw) * np.pi / 180.0
+                # init_speed = carla.Vector3D(x=self.desired_speed * np.cos(yaw),
+                #                             y=self.desired_speed * np.sin(yaw))
+                # self.ego.set_velocity(init_speed)
                 self.world.tick()
                 self.world.tick()
 
@@ -382,9 +382,10 @@ class CarlaEnv(gym.Env):
         velocity = self.ego.get_velocity()
         v_norm = np.linalg.norm(np.array((velocity.x, velocity.y)))
         if v_norm < 4:
-            self.logger.debug("Speed too slow! Episode Done.")
-            self.isSpecialSpeed = True
-            return True
+            pass
+            # self.logger.debug("Speed too slow! Episode Done.")
+            # self.isSpecialSpeed = True
+            # return True
         elif v_norm > 11:
             self.logger.debug("Speed too fast! Episode Done.")
             self.isSpecialSpeed = True
@@ -536,7 +537,10 @@ class CarlaEnv(gym.Env):
                 self.client.set_timeout(10.0)
 
                 # Set map
-                self.world = self.client.load_world('Town01')
+                if self.task_mode == 'Straight':
+                    self.world = self.client.load_world('Town01')
+                elif self.task_mode == 'Curve':
+                    self.world = self.client.load_world('Town05')
                 self.map = self.world.get_map()
 
                 # Set weather
