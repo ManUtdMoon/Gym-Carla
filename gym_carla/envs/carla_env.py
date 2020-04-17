@@ -52,16 +52,10 @@ class CarlaEnv(gym.Env):
 
         self.desired_speed = params['desired_speed']
         self.max_ego_spawn_times = params['max_ego_spawn_times']
-        self.route_id = 1
 
         # used for debugging
         self.instruction = {0.0: 'REACH_GOAL', 2.0: 'LANE_FOLLOW',
             3.0: 'TURN_LEFT',4.0: 'TURN_RIGHT',5.0: 'GO_STRAIGHT'}
-
-        # Start and Destination
-        self.starts, self.dests = train_coordinates(self.task_mode)
-        self.start = self.starts[self.route_id]
-        self.dest = self.dests[self.route_id]
 
         # action and observation space
         self.action_space = spaces.Box(np.array([-2.0, -2.0]),
@@ -109,9 +103,6 @@ class CarlaEnv(gym.Env):
 
         # A list stores the ids for each episode
         self.actors = []
-
-        # The tuple (x,y) for the current waypoint
-        self.current_wpt = np.array((self.start[0], self.start[1]))
 
 
     def step(self, action):
@@ -181,7 +172,7 @@ class CarlaEnv(gym.Env):
             self.state_info['action_t_1'] = self.last_action
 
             isDone = self._terminal()
-            current_reward = self._get_reward()
+            current_reward = self._get_reward(np.array(action))
 
             # Update timesteps
             self.time_step += 1
@@ -216,6 +207,15 @@ class CarlaEnv(gym.Env):
                 self._set_synchronous_mode(False)
 
                 # Spawn the ego vehicle at a random position between start and dest
+                # Start and Destination
+                self.starts, self.dests = train_coordinates(self.task_mode)
+                self.route_id = np.random.randint(0, 2)
+                self.start = self.starts[self.route_id]
+                self.dest = self.dests[self.route_id]
+
+                # The tuple (x,y) for the current waypoint
+                self.current_wpt = np.array((self.start[0], self.start[1]))
+
                 ego_spawn_times = 0
                 while True:
                     if ego_spawn_times > self.max_ego_spawn_times:
@@ -225,7 +225,7 @@ class CarlaEnv(gym.Env):
                     transform = self._set_carla_transform(self.start)
                         # Code_mode == train, spwan randomly between start and destination
                     if self.code_mode == 'train':
-                        transform.location = self._get_random_position_between(self.start, self.dest)
+                        transform = self._get_random_position_between(self.start, self.dest, transform)
                     if self._try_spawn_ego_vehicle_at(transform):
                         break
                     else:
@@ -274,10 +274,10 @@ class CarlaEnv(gym.Env):
                 self.world.apply_settings(self.settings)
 
                 # Set the initial speed to desired speed
-                # yaw = (self.ego.get_transform().rotation.yaw) * np.pi / 180.0
-                # init_speed = carla.Vector3D(x=self.desired_speed * np.cos(yaw),
-                #                             y=self.desired_speed * np.sin(yaw))
-                # self.ego.set_velocity(init_speed)
+                yaw = (self.ego.get_transform().rotation.yaw) * np.pi / 180.0
+                init_speed = carla.Vector3D(x=self.desired_speed * np.cos(yaw),
+                                            y=self.desired_speed * np.sin(yaw))
+                self.ego.set_velocity(init_speed)
                 self.world.tick()
                 self.world.tick()
 
@@ -382,10 +382,10 @@ class CarlaEnv(gym.Env):
         velocity = self.ego.get_velocity()
         v_norm = np.linalg.norm(np.array((velocity.x, velocity.y)))
         if v_norm < 4:
-            pass
-            # self.logger.debug("Speed too slow! Episode Done.")
-            # self.isSpecialSpeed = True
-            # return True
+            # pass
+            self.logger.debug("Speed too slow! Episode Done.")
+            self.isSpecialSpeed = True
+            return True
         elif v_norm > 11:
             self.logger.debug("Speed too fast! Episode Done.")
             self.isSpecialSpeed = True
@@ -483,9 +483,11 @@ class CarlaEnv(gym.Env):
         # return np.float32(current_obs / 255.0)
 
 
-    def _get_reward(self):
+    def _get_reward(self, delta_action):
         """
         calculate the reward of current state
+        params:
+            action: np.array of shape(2,)
         """
         # end state
         # reward for done: collision/out/SpecislSPeed & Success
@@ -511,8 +513,7 @@ class CarlaEnv(gym.Env):
         # print("r_steer:", delta_yaw, '------>', r_steer)
 
         # reward for action smoothness
-        current_action = self.ego.get_control()
-        r_action_regularized = - 5 * current_action.steer**2
+        r_action_regularized = - 5 * np.linalg.norm(delta_action)**2
         # print("r_action:", current_action, '------>', r_action_regularized)
 
         # reward for lateral distance to the center of road
@@ -552,19 +553,28 @@ class CarlaEnv(gym.Env):
                 time.sleep(2)
 
 
-    def _get_random_position_between(self, start, dest):
+    def _get_random_position_between(self, start, dest, transform):
         """
         get a random carla position on the line between start and dest
         """
-        s_x, s_y, s_z = start[0], start[1], start[2]
-        d_x, d_y, d_z = dest[0], dest[1], dest[2]
+        if self.task_mode == 'Straight':
+            s_x, s_y, s_z = start[0], start[1], start[2]
+            d_x, d_y, d_z = dest[0], dest[1], dest[2]
 
-        ratio = np.random.rand()
-        new_x = (d_x - s_x) * ratio + s_x
-        new_y = (d_y - s_y) * ratio + s_y
-        new_z = (d_z - s_z) * ratio + s_z
+            ratio = np.random.rand()
+            new_x = (d_x - s_x) * ratio + s_x
+            new_y = (d_y - s_y) * ratio + s_y
+            new_z = (d_z - s_z) * ratio + s_z
 
-        return carla.Location(x=new_x, y=new_y, z=new_z)
+            transform.location = carla.Location(x=new_x, y=new_y, z=new_z)
+
+        elif self.task_mode == 'Curve':
+            ratio = float(np.random.rand() * 100)
+            start = carla.Location(x=start[0], y=start[1], z=0.22)
+            transform = self.map.get_waypoint(location=start).next(ratio)[0].transform
+            transform.location.z = 1.4
+
+        return transform
 
 
     def _get_delta_yaw(self):
