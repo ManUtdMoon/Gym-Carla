@@ -20,8 +20,8 @@ def main():
         'dt': 0.025,  # time interval between two frames
         'ego_vehicle_filter': 'vehicle.lincoln*',  # filter for defining ego vehicle
         'port': 2000,  # connection port
-        'task_mode': 'Curve',  # mode of the task, [random, roundabout (only for Town03)]
-        'code_mode': 'train',
+        'task_mode': 'Straight',  # mode of the task, [random, roundabout (only for Town03)]
+        'code_mode': 'test',
         'max_time_episode': 5000,  # maximum timesteps per episode
         'desired_speed': 8,  # desired speed (m/s)
         'max_ego_spawn_times': 100,  # maximum times to spawn ego vehicle
@@ -50,14 +50,15 @@ def main():
     while not done:
         tac = time.time()
         if tac - tic <= 10:
-            action = [0.0, 0.1]
+            action = [0.0, -0.1]
             # throttle = np.random.rand(1) - 0.5
             # action = np.concatenate((throttle, np.random.uniform(low=-0.3, high=0.3, size=(1,))), axis=0)
         else:
             action = [0.0, 0.00]
         print(obs[0:4])
-        print(obs[4]*20, obs[5]*2, obs[6]*5, obs[7]/10)
-        print(obs[8:10]/10)
+        print(obs[4], obs[5]*2, obs[6]*5)
+        print(obs[7]*20, obs[8]/10)
+        print(obs[9:12]/10)
         print('--------------------------------')
         obs, r, done, info = env.step(action)
         count += 1
@@ -75,7 +76,7 @@ def main():
             print("total reward is", ret)
             print("time steps", env.time_step)
             # env.close()
-            env.reset()
+            obs, info = env.reset()
             ret = 0
             # print(env.ego.get_location())
             done = False

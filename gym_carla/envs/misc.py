@@ -62,6 +62,23 @@ def _vec_decompose(vec_to_be_decomposed, direction):
                                                    lat_vec[1] * direction[0])
     return np.array([lon_scalar, lat_scalar], dtype=np.float32)
 
+def delta_angle_between(theta_1, theta_2):
+    """
+    Compute the delta angle between theta_1 & theta_2(both in degree)
+    params:
+        theta: float
+    return:
+        delta_theta: float, in [-pi, pi]
+    """
+    theta_1 = theta_1 % 360
+    theta_2 = theta_2 % 360
+    delta_theta = theta_2 - theta_1
+    if 180 <= delta_theta and delta_theta <= 360:
+        delta_theta -= 360
+    elif -360 <= delta_theta and delta_theta <= -180:
+        delta_theta += 360
+    return delta_theta
+
 if __name__ == '__main__':
     print(command2Vector(4.0))
     print(command2Vector(5.0))

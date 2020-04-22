@@ -26,14 +26,8 @@ import cv2
 import torch
 
 from .coordinates import train_coordinates
-from .misc import _vec_decompose
+from .misc import _vec_decompose, delta_angle_between
 from .carla_logger import *
-
-# REACH_GOAL = 0.0
-# GO_STRAIGHT = 5.0
-# TURN_RIGHT = 4.0
-# TURN_LEFT = 3.0
-# LANE_FOLLOW = 2.0
 
 
 class CarlaEnv(gym.Env):
@@ -53,15 +47,11 @@ class CarlaEnv(gym.Env):
         self.desired_speed = params['desired_speed']
         self.max_ego_spawn_times = params['max_ego_spawn_times']
 
-        # used for debugging
-        self.instruction = {0.0: 'REACH_GOAL', 2.0: 'LANE_FOLLOW',
-            3.0: 'TURN_LEFT',4.0: 'TURN_RIGHT',5.0: 'GO_STRAIGHT'}
-
         # action and observation space
         self.action_space = spaces.Box(np.array([-2.0, -2.0]),
             np.array([2.0, 2.0]), dtype=np.float32)
-        self.state_space = spaces.Box(low=-20.0, high=20.0,
-            shape=(10,), dtype=np.float32)
+        self.state_space = spaces.Box(low=-50.0, high=50.0,
+            shape=(12,), dtype=np.float32)
 
         # Connect to carla server and get world object
         # print('connecting to Carla server...')
@@ -105,90 +95,6 @@ class CarlaEnv(gym.Env):
         self.actors = []
 
 
-    def step(self, action):
-
-        try:
-            # Assign acc/steer/brake to action signal
-            # Ver. 1 input is the value of control signal
-            # throttle_or_brake, steer = action[0], action[1]
-            # if throttle_or_brake >= 0:
-            #     throttle = throttle_or_brake
-            #     brake = 0
-            # else:
-            #     throttle = 0
-            #     brake = -throttle_or_brake
-
-            # Ver. 2 input is the delta value of control signal
-            # TODO:[another kind of action] change the action space to [-2, 2]
-            current_action = np.array(action) + self.last_action
-            current_action = np.clip(current_action, -1.0, 1.0, dtype=np.float32)
-            throttle_or_brake, steer = current_action
-
-            if throttle_or_brake >= 0:
-                throttle = throttle_or_brake
-                brake = 0
-            else:
-                throttle = 0
-                brake = -throttle_or_brake
-
-            # Apply control
-            act = carla.VehicleControl(throttle=float(throttle), steer=float(steer), brake=float(brake))
-            self.ego.apply_control(act)
-
-            for _ in range(4):
-                self.world.tick()
-
-            # calculate reward
-            ego_x, ego_y = self._get_ego_pos()
-            self.new_dist = np.linalg.norm((ego_x-self.dest[0], ego_y-self.dest[1]))
-
-            # Get waypoint infomation
-            self.current_wpt = self._get_waypoint_xy()
-            dyaw_dt = self.ego.get_angular_velocity().z
-
-            delta_yaw, wpt_yaw = self._get_delta_yaw()
-            road_direction = np.array([np.cos(wpt_yaw/180*np.pi), np.sin(wpt_yaw/180*np.pi)])
-
-            # Update State Info (Necessary?)
-            velocity = self.ego.get_velocity()
-            accel = self.ego.get_acceleration()
-            v_t_absolute = np.array([velocity.x, velocity.y])
-            a_t_absolute = np.array([accel.x, accel.y])
-
-            # decompose v and a to tangential and normal
-            v_t = _vec_decompose(v_t_absolute, road_direction)
-            a_t = _vec_decompose(a_t_absolute, road_direction)
-
-            pos_err_vec = np.array((ego_x, ego_y)) - self.current_wpt
-
-            self.state_info['velocity_t'] = v_t
-            self.state_info['acceleration_t'] = a_t
-            self.state_info['dist_to_dest'] = self.new_dist
-            self.state_info['delta_yaw_t'] = delta_yaw
-            self.state_info['dyaw_dt_t'] = dyaw_dt
-            self.state_info['lateral_dist_t'] = np.linalg.norm(pos_err_vec) * \
-                                                np.sign(pos_err_vec[0] * road_direction[1] - \
-                                                        pos_err_vec[1] * road_direction[0])
-            self.state_info['action_t_1'] = self.last_action
-
-            isDone = self._terminal()
-            current_reward = self._get_reward(np.array(action))
-
-            # Update timesteps
-            self.time_step += 1
-            self.total_step += 1
-            self.last_action = current_action
-            # print("time step %d" % self.time_step)
-
-            return (self._info2normalized_state_vector(), current_reward, isDone, copy.deepcopy(self.state_info))
-
-        except:
-            self.logger.error("Env step() error")
-            time.sleep(2)
-            return (self._info2normalized_state_vector(), 0.0, True, copy.deepcopy(self.state_info))
-
-
-
     def reset(self):
 
         while True:
@@ -209,7 +115,10 @@ class CarlaEnv(gym.Env):
                 # Spawn the ego vehicle at a random position between start and dest
                 # Start and Destination
                 self.starts, self.dests = train_coordinates(self.task_mode)
-                self.route_id = np.random.randint(0, 2)
+                if self.task_mode == 'Straight':
+                    self.route_id = 0
+                else:
+                    self.route_id = np.random.randint(0, 2)
                 self.start = self.starts[self.route_id]
                 self.dest = self.dests[self.route_id]
 
@@ -283,13 +192,18 @@ class CarlaEnv(gym.Env):
 
                 # Get waypoint infomation
                 ego_x, ego_y = self._get_ego_pos()
-                dest_x, dest_y = self.dest[0], self.dest[1]
-                self.last_dist = np.linalg.norm((ego_x-dest_x, ego_y-dest_y))
+                ego2dest = np.array((self.dest[0]-ego_x + 1e-6, self.dest[1]-ego_y + 1e-6))
+                new_dist = np.linalg.norm(ego2dest)
+                angle_ego2dest = np.arctan(ego2dest[1]/ego2dest[0])
+                if ego2dest[0] < 0:
+                    angle_ego2dest += np.pi
+
                 self.current_wpt = self._get_waypoint_xy()
                 dyaw_dt = self.ego.get_angular_velocity().z
 
-                delta_yaw, wpt_yaw = self._get_delta_yaw()
+                delta_yaw, wpt_yaw, ego_yaw = self._get_delta_yaw()
                 road_direction = np.array([np.cos(wpt_yaw/180*np.pi), np.sin(wpt_yaw/180*np.pi)])
+                ego_heading = np.float32(ego_yaw / 180.0 * np.pi)
 
                 # Update State Info (Necessary?)
                 velocity = self.ego.get_velocity()
@@ -298,8 +212,8 @@ class CarlaEnv(gym.Env):
                 a_t_absolute = np.array([accel.x, accel.y])
 
                 # decompose v and a to tangential and normal
-                v_t = _vec_decompose(v_t_absolute, road_direction)
-                a_t = _vec_decompose(a_t_absolute, road_direction)
+                # v_t = _vec_decompose(v_t_absolute, road_direction)
+                # a_t = _vec_decompose(a_t_absolute, road_direction)
 
                 # Reset action of last time step
                 # TODO:[another kind of action]
@@ -307,11 +221,16 @@ class CarlaEnv(gym.Env):
 
                 pos_err_vec = np.array((ego_x, ego_y)) - self.current_wpt
 
-                self.state_info['velocity_t'] = v_t
-                self.state_info['acceleration_t'] = a_t
-                self.state_info['dist_to_dest'] = self.last_dist
+                self.state_info['velocity_t'] = v_t_absolute
+                self.state_info['acceleration_t'] = a_t_absolute
+
+                self.state_info['ego_heading'] = ego_heading
                 self.state_info['delta_yaw_t'] = delta_yaw
                 self.state_info['dyaw_dt_t'] = dyaw_dt
+
+                self.state_info['dist_to_dest'] = new_dist
+                self.state_info['angle_to_dest'] = delta_angle_between(ego_yaw, angle_ego2dest*180/np.pi)
+
                 self.state_info['lateral_dist_t'] = np.linalg.norm(pos_err_vec) * \
                                                     np.sign(pos_err_vec[0] * road_direction[1] - \
                                                             pos_err_vec[1] * road_direction[0])
@@ -324,15 +243,107 @@ class CarlaEnv(gym.Env):
                 self.isOutOfLane = False
                 self.isSpecialSpeed = False
 
-                # state_vector, _, _, _ = self.step([0.0, 0.0])
-                # state_vector, _, _, _ = self.step([0.0, 0.0])
-
-                return self._info2normalized_state_vector(), copy.deepcopy(self.state_info)
+                return self._get_obs(), copy.deepcopy(self.state_info)
 
             except:
                 self.logger.error("Env reset() error")
                 time.sleep(2)
                 self._make_carla_client('localhost', self.port)
+
+
+
+    def step(self, action):
+
+        try:
+            # Assign acc/steer/brake to action signal
+            # Ver. 1 input is the value of control signal
+            # throttle_or_brake, steer = action[0], action[1]
+            # if throttle_or_brake >= 0:
+            #     throttle = throttle_or_brake
+            #     brake = 0
+            # else:
+            #     throttle = 0
+            #     brake = -throttle_or_brake
+
+            # Ver. 2 input is the delta value of control signal
+            # TODO:[another kind of action] change the action space to [-2, 2]
+            current_action = np.array(action) + self.last_action
+            current_action = np.clip(current_action, -1.0, 1.0, dtype=np.float32)
+            throttle_or_brake, steer = current_action
+
+            if throttle_or_brake >= 0:
+                throttle = throttle_or_brake
+                brake = 0
+            else:
+                throttle = 0
+                brake = -throttle_or_brake
+
+            # Apply control
+            act = carla.VehicleControl(throttle=float(throttle), steer=float(steer), brake=float(brake))
+            self.ego.apply_control(act)
+
+            for _ in range(4):
+                self.world.tick()
+
+            # Get waypoint infomation
+            ego_x, ego_y = self._get_ego_pos()
+            ego2dest = np.array((self.dest[0]-ego_x + 1e-6, self.dest[1]-ego_y + 1e-6))
+            new_dist = np.linalg.norm(ego2dest)
+                # compute the angle between heading and dest
+            angle_ego2dest = np.arctan(ego2dest[1]/ego2dest[0])
+            if ego2dest[0] < 0:
+                angle_ego2dest += np.pi
+
+            self.current_wpt = self._get_waypoint_xy()
+            dyaw_dt = self.ego.get_angular_velocity().z
+
+            delta_yaw, wpt_yaw, ego_yaw = self._get_delta_yaw()
+            road_direction = np.array([np.cos(wpt_yaw/180*np.pi), np.sin(wpt_yaw/180*np.pi)])
+            ego_heading = np.float32(ego_yaw / 180.0 * np.pi)
+
+            # Update State Info (Necessary?)
+            velocity = self.ego.get_velocity()
+            accel = self.ego.get_acceleration()
+            v_t_absolute = np.array([velocity.x, velocity.y])
+            a_t_absolute = np.array([accel.x, accel.y])
+
+            # decompose v and a to tangential and normal
+            # v_t = _vec_decompose(v_t_absolute, road_direction)
+            # a_t = _vec_decompose(a_t_absolute, road_direction)
+
+            pos_err_vec = np.array((ego_x, ego_y)) - self.current_wpt
+
+            self.state_info['velocity_t'] = v_t_absolute
+            self.state_info['acceleration_t'] = a_t_absolute
+
+            self.state_info['ego_heading'] = ego_heading
+            self.state_info['delta_yaw_t'] = delta_yaw
+            self.state_info['dyaw_dt_t'] = dyaw_dt
+
+            self.state_info['dist_to_dest'] = new_dist
+            self.state_info['angle_to_dest'] = delta_angle_between(ego_yaw, angle_ego2dest*180/np.pi)
+
+            self.state_info['lateral_dist_t'] = np.linalg.norm(pos_err_vec) * \
+                                                np.sign(pos_err_vec[0] * road_direction[1] - \
+                                                        pos_err_vec[1] * road_direction[0])
+            self.state_info['action_t_1'] = self.last_action
+
+            # calculate reward
+            isDone = self._terminal()
+            current_reward = self._get_reward(np.array(action))
+
+            # Update timesteps
+            self.time_step += 1
+            self.total_step += 1
+            self.last_action = current_action
+            # print("time step %d" % self.time_step)
+
+            return (self._get_obs(), current_reward, isDone, copy.deepcopy(self.state_info))
+
+        except:
+            self.logger.error("Env step() error")
+            time.sleep(2)
+            return (self._get_obs(), 0.0, True, copy.deepcopy(self.state_info))
 
 
     def render(self, mode='human'):
@@ -477,10 +488,12 @@ class CarlaEnv(gym.Env):
 
 
     def _get_obs(self):
-        # TODO: switch to vector version
+        # [img version]
         # current_obs = self.camera_img[36:, :, :].copy()
-        pass
         # return np.float32(current_obs / 255.0)
+
+        # [vec version]
+        return np.float32(self._info2normalized_state_vector())
 
 
     def _get_reward(self, delta_action):
@@ -504,16 +517,16 @@ class CarlaEnv(gym.Env):
         ego_velocity = np.array([v.x, v.y])
         speed_norm = np.linalg.norm(ego_velocity)
         delta_speed = speed_norm - self.desired_speed
-        r_speed = -delta_speed**2 / 8.0
+        r_speed = -delta_speed**2 / 5.0
         # print("r_speed:", speed_norm)
 
         # reward for steer
-        delta_yaw, wpt_yaw = self._get_delta_yaw()
+        delta_yaw, _, _ = self._get_delta_yaw()
         r_steer = -100 * (delta_yaw * np.pi / 180)**2
         # print("r_steer:", delta_yaw, '------>', r_steer)
 
         # reward for action smoothness
-        r_action_regularized = - 5 * np.linalg.norm(delta_action)**2
+        r_action_regularized = - 8 * np.linalg.norm(delta_action)**2
         # print("r_action:", current_action, '------>', r_action_regularized)
 
         # reward for lateral distance to the center of road
@@ -595,7 +608,7 @@ class CarlaEnv(gym.Env):
         elif -360 <= delta_yaw and delta_yaw <= -180:
             delta_yaw += 360
 
-        return delta_yaw, wpt_yaw
+        return delta_yaw, wpt_yaw, ego_yaw
 
 
     def _get_waypoint_xy(self):
@@ -619,14 +632,21 @@ class CarlaEnv(gym.Env):
         '''
         velocity_t = self.state_info['velocity_t']
         accel_t = self.state_info['acceleration_t']
-        dist_t = self.state_info['dist_to_dest'].reshape((1,)) / 20.0
+
+        heading = self.state_info['ego_heading'].reshape((1,)) * 5.0
         delta_yaw_t = np.array(self.state_info['delta_yaw_t']).reshape((1,)) / 2.0
         dyaw_dt_t = np.array(self.state_info['dyaw_dt_t']).reshape((1,)) / 5.0
+
+        dist_t = self.state_info['dist_to_dest'].reshape((1,)) / 20.0
+        angle_t = self.state_info['angle_to_dest'].reshape((1,)) * 10.0
+
         lateral_dist_t = self.state_info['lateral_dist_t'].reshape((1,)) * 10.0
         action_last = self.state_info['action_t_1'] * 10.0
 
-        info_vec = np.concatenate([velocity_t, accel_t, dist_t,
-                                   delta_yaw_t, dyaw_dt_t, lateral_dist_t, action_last],
+        info_vec = np.concatenate([velocity_t, accel_t,
+                                   heading, dyaw_dt_t, delta_yaw_t,
+                                   dist_t, angle_t,
+                                   lateral_dist_t, action_last],
                                    axis=0)
         info_vec = info_vec.squeeze()
 
