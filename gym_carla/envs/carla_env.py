@@ -57,6 +57,9 @@ class CarlaEnv(gym.Env):
         # print('connecting to Carla server...')
         self._make_carla_client('localhost', self.port)
 
+        # Get destination
+        self.starts, self.dests = train_coordinates(self.task_mode)
+
         # Create the ego vehicle blueprint
         self.ego_bp = self._create_vehicle_bluepprint(params['ego_vehicle_filter'], color='49,8,8')
 
@@ -114,11 +117,10 @@ class CarlaEnv(gym.Env):
 
                 # Spawn the ego vehicle at a random position between start and dest
                 # Start and Destination
-                self.starts, self.dests = train_coordinates(self.task_mode)
                 if self.task_mode == 'Straight':
                     self.route_id = 0
                 else:
-                    self.route_id = np.random.randint(0, 2)
+                    self.route_id = np.random.randint(2, 4)
                 self.start = self.starts[self.route_id]
                 self.dest = self.dests[self.route_id]
 
@@ -383,7 +385,8 @@ class CarlaEnv(gym.Env):
             return True
 
         # If out of lane
-        if len(self.lane_invasion_hist) > 0:
+        # if len(self.lane_invasion_hist) > 0:
+        if self.state_info['lateral_dist_t'] > 0.7:
             # print("lane invasion happened! Episode Done.")
             self.logger.debug('Lane invasion happened! Episode Done.')
             self.isOutOfLane = True
@@ -392,7 +395,7 @@ class CarlaEnv(gym.Env):
         # If speed is special
         velocity = self.ego.get_velocity()
         v_norm = np.linalg.norm(np.array((velocity.x, velocity.y)))
-        if v_norm < 4:
+        if v_norm < 2:
             # pass
             self.logger.debug("Speed too slow! Episode Done.")
             self.isSpecialSpeed = True
@@ -526,7 +529,7 @@ class CarlaEnv(gym.Env):
         # print("r_steer:", delta_yaw, '------>', r_steer)
 
         # reward for action smoothness
-        r_action_regularized = - 8 * np.linalg.norm(delta_action)**2
+        r_action_regularized = - 5 * np.linalg.norm(delta_action)**2
         # print("r_action:", current_action, '------>', r_action_regularized)
 
         # reward for lateral distance to the center of road
@@ -554,7 +557,7 @@ class CarlaEnv(gym.Env):
                 if self.task_mode == 'Straight':
                     self.world = self.client.load_world('Town01')
                 elif self.task_mode == 'Curve':
-                    self.world = self.client.load_world('Town05')
+                    self.world = self.client.load_world('Town01')
                 self.map = self.world.get_map()
 
                 # Set weather
@@ -582,8 +585,10 @@ class CarlaEnv(gym.Env):
             transform.location = carla.Location(x=new_x, y=new_y, z=new_z)
 
         elif self.task_mode == 'Curve':
-            ratio = float(np.random.rand() * 100)
             start = carla.Location(x=start[0], y=start[1], z=0.22)
+            end = carla.Location(x=dest[0], y=dest[1], z=0.22)
+            ratio = float(np.random.rand() * 45)
+
             transform = self.map.get_waypoint(location=start).next(ratio)[0].transform
             transform.location.z = 1.4
 

@@ -20,21 +20,26 @@ def main():
         'dt': 0.025,  # time interval between two frames
         'ego_vehicle_filter': 'vehicle.lincoln*',  # filter for defining ego vehicle
         'port': 2000,  # connection port
-        'task_mode': 'Straight',  # mode of the task, [random, roundabout (only for Town03)]
-        'code_mode': 'test',
+        'task_mode': 'Curve',  # mode of the task, [random, roundabout (only for Town03)]
+        'code_mode': 'train',
         'max_time_episode': 5000,  # maximum timesteps per episode
-        'desired_speed': 8,  # desired speed (m/s)
+        'desired_speed': 6,  # desired speed (m/s)
         'max_ego_spawn_times': 100,  # maximum times to spawn ego vehicle
     }
 
     # Set gym-carla environment
     env = gym.make('carla-v0', params=params)
-    obs, info = env.reset()
-    start = carla.Location(x=env.start[0], y=env.start[1], z=0.22)
-    end = carla.Location(x=env.dest[0], y=env.dest[1], z=0.22)
-    print(env.map.get_waypoint(location=start).next(100)[0])
+    start = carla.Location(x=-2, y=302, z=0.22)
+    end = carla.Location(x=23, y=330.54, z=0.22)
     env.world.debug.draw_point(start)
     env.world.debug.draw_point(end)
+
+    print(env.map.get_waypoint(location=start))
+    print(env.map.get_waypoint(location=end))
+    obs, info = env.reset()
+
+    
+
     # for dist in np.arange(0.1, 100.1, 1):
     #     wpt = env.map.get_waypoint(location=start).next(dist)[0]
     #     env.world.debug.draw_point(wpt.transform.location)
@@ -50,11 +55,11 @@ def main():
     while not done:
         tac = time.time()
         if tac - tic <= 10:
-            action = [0.0, -0.1]
+            action = [0.0, -0.2]
             # throttle = np.random.rand(1) - 0.5
             # action = np.concatenate((throttle, np.random.uniform(low=-0.3, high=0.3, size=(1,))), axis=0)
         else:
-            action = [0.0, 0.00]
+            action = [0.0, -0.2]
         print(obs[0:4])
         print(obs[4], obs[5]*2, obs[6]*5)
         print(obs[7]*20, obs[8]/10)
