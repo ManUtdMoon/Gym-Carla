@@ -382,3 +382,25 @@
 2020-04-24 10:38:29 DEBUG    Lane invasion happened! Episode Done.
 2020-04-24 10:38:31 DEBUG    Lane invasion happened! Episode Done.
 2020-04-24 10:38:33 DEBUG    Lane invasion happened! Episode Done.
+2020-04-24 13:30:23 INFO     Env running in port 2000
+2020-04-24 13:30:23 INFO     connecting to Carla server...
+2020-04-24 13:30:24 INFO     Carla server port 2000 connected!
+2020-04-24 13:30:30 DEBUG    Lane invasion happened! Episode Done.
+2020-04-24 13:30:36 DEBUG    Lane invasion happened! Episode Done.
+2020-04-24 13:30:42 DEBUG    Lane invasion happened! Episode Done.
+2020-04-24 13:30:48 DEBUG    Lane invasion happened! Episode Done.
+2020-04-24 13:30:54 DEBUG    Lane invasion happened! Episode Done.
+2020-04-24 13:31:00 DEBUG    Lane invasion happened! Episode Done.
+2020-04-24 13:31:06 DEBUG    Lane invasion happened! Episode Done.
+2020-04-24 13:31:12 DEBUG    Lane invasion happened! Episode Done.
+2020-04-24 13:32:25 INFO     Env running in port 2000
+2020-04-24 13:32:25 INFO     connecting to Carla server...
+2020-04-24 13:32:26 INFO     Carla server port 2000 connected!
+2020-04-24 13:32:33 DEBUG    Collision happened! Episode Done.
+2020-04-24 13:32:39 DEBUG    Lane invasion happened! Episode Done.
+2020-04-24 13:32:47 DEBUG    Collision happened! Episode Done.
+2020-04-24 13:32:54 DEBUG    Collision happened! Episode Done.
+2020-04-24 13:33:00 DEBUG    Lane invasion happened! Episode Done.
+2020-04-24 13:33:07 DEBUG    Collision happened! Episode Done.
+2020-04-24 13:33:13 DEBUG    Lane invasion happened! Episode Done.
+2020-04-24 13:33:20 DEBUG    Collision happened! Episode Done.
