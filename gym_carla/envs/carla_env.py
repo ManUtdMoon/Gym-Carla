@@ -80,8 +80,8 @@ class CarlaEnv(gym.Env):
         # self.camera_bp.set_attribute('sensor_tick', '0.02')
 
         # Lane Invasion Sensor
-        self.lane_bp = self.world.get_blueprint_library().find('sensor.other.lane_invasion')
-        self.lane_invasion_hist = []
+        # self.lane_bp = self.world.get_blueprint_library().find('sensor.other.lane_invasion')
+        # self.lane_invasion_hist = []
 
         # Set fixed simulation step for synchronous mode
         self.settings = self.world.get_settings()
@@ -168,13 +168,13 @@ class CarlaEnv(gym.Env):
                 #     self.camera_img = array
 
                 # Add lane invasion sensor
-                self.lane_sensor = self.world.spawn_actor(self.lane_bp, carla.Transform(), attach_to=self.ego)
-                self.actors.append(self.lane_sensor)
-                self.lane_sensor.listen(lambda event: get_lane_invasion(event))
-                def get_lane_invasion(event):
-                    self.lane_invasion_hist = event.crossed_lane_markings
-                    # print("length of lane invasion: %d" % len(self.lane_invasion_hist))
-                self.lane_invasion_hist = []
+                # self.lane_sensor = self.world.spawn_actor(self.lane_bp, carla.Transform(), attach_to=self.ego)
+                # self.actors.append(self.lane_sensor)
+                # self.lane_sensor.listen(lambda event: get_lane_invasion(event))
+                # def get_lane_invasion(event):
+                #     self.lane_invasion_hist = event.crossed_lane_markings
+                #     # print("length of lane invasion: %d" % len(self.lane_invasion_hist))
+                # self.lane_invasion_hist = []
 
                 # Update timesteps
                 self.time_step=0

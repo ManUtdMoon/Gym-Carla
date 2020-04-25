@@ -412,3 +412,10 @@
 2020-04-24 16:15:42 INFO     connecting to Carla server...
 2020-04-24 16:15:43 INFO     Carla server port 2000 connected!
 2020-04-24 16:15:44 DEBUG    Speed too slow! Episode Done.
+2020-04-25 10:51:11 INFO     Env running in port 2000
+2020-04-25 10:51:11 INFO     connecting to Carla server...
+2020-04-25 10:51:12 INFO     Carla server port 2000 connected!
+2020-04-25 10:51:18 DEBUG    Lane invasion happened! Episode Done.
+2020-04-25 10:51:27 INFO     Env running in port 2000
+2020-04-25 10:51:27 INFO     connecting to Carla server...
+2020-04-25 10:51:28 INFO     Carla server port 2000 connected!

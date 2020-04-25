@@ -55,7 +55,7 @@ def main():
     while not done:
         tac = time.time()
         if tac - tic <= 10:
-            action = [-1.0, 0]
+            action = [0.0, 0]
             # throttle = np.random.rand(1) - 0.5
             # action = np.concatenate((throttle, np.random.uniform(low=-0.3, high=0.3, size=(1,))), axis=0)
         else:
