@@ -386,7 +386,7 @@ class CarlaEnv(gym.Env):
 
         # If out of lane
         # if len(self.lane_invasion_hist) > 0:
-        if self.state_info['lateral_dist_t'] > 0.7:
+        if abs(self.state_info['lateral_dist_t']) > 0.7:
             # print("lane invasion happened! Episode Done.")
             self.logger.debug('Lane invasion happened! Episode Done.')
             self.isOutOfLane = True

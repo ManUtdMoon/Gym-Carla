@@ -404,3 +404,11 @@
 2020-04-24 13:33:07 DEBUG    Collision happened! Episode Done.
 2020-04-24 13:33:13 DEBUG    Lane invasion happened! Episode Done.
 2020-04-24 13:33:20 DEBUG    Collision happened! Episode Done.
+2020-04-24 16:08:11 INFO     Env running in port 2000
+2020-04-24 16:08:11 INFO     connecting to Carla server...
+2020-04-24 16:08:19 INFO     Carla server port 2000 connected!
+2020-04-24 16:08:27 DEBUG    Collision happened! Episode Done.
+2020-04-24 16:15:42 INFO     Env running in port 2000
+2020-04-24 16:15:42 INFO     connecting to Carla server...
+2020-04-24 16:15:43 INFO     Carla server port 2000 connected!
+2020-04-24 16:15:44 DEBUG    Speed too slow! Episode Done.

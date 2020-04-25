@@ -55,12 +55,12 @@ def main():
     while not done:
         tac = time.time()
         if tac - tic <= 10:
-            action = [0.0, 0]
+            action = [-1.0, 0]
             # throttle = np.random.rand(1) - 0.5
             # action = np.concatenate((throttle, np.random.uniform(low=-0.3, high=0.3, size=(1,))), axis=0)
         else:
             action = [0.0, 0]
-        # print(obs[0:4])
+        print(obs[0:4])
         # print(obs[4], obs[5]*2, obs[6]*5)
         # print(obs[7]*20, obs[8]/10)
         # print(obs[9:12]/10)
@@ -77,14 +77,14 @@ def main():
 
         if done:
             toc = time.time()
-            print("An episode took %f s" %(toc - tic))
+            print("An episode took %f s" %(toc - tac))
             print("total reward is", ret)
             print("time steps", env.time_step)
             # env.close()
-            obs, info = env.reset()
+            # obs, info = env.reset()
             ret = 0
             # print(env.ego.get_location())
-            done = False
+            # done = False
             # break
 
     # turn left
