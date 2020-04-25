@@ -26,14 +26,8 @@ import cv2
 import torch
 
 from .coordinates import train_coordinates
-from .misc import *
+from .misc import _vec_decompose, delta_angle_between
 from .carla_logger import *
-
-# REACH_GOAL = 0.0
-# GO_STRAIGHT = 5.0
-# TURN_RIGHT = 4.0
-# TURN_LEFT = 3.0
-# LANE_FOLLOW = 2.0
 
 
 class CarlaEnv(gym.Env):
@@ -52,12 +46,6 @@ class CarlaEnv(gym.Env):
 
         self.desired_speed = params['desired_speed']
         self.max_ego_spawn_times = params['max_ego_spawn_times']
-        self.route_id = 0
-
-        # Start and Destination
-        self.starts, self.dests = train_coordinates(self.task_mode)
-        self.start = self.starts[self.route_id]
-        self.dest = self.dests[self.route_id]
 
         # action and observation space
         self.action_space = spaces.Box(np.array([-2.0, -2.0]),
@@ -68,6 +56,9 @@ class CarlaEnv(gym.Env):
         # Connect to carla server and get world object
         # print('connecting to Carla server...')
         self._make_carla_client('localhost', self.port)
+
+        # Get destination
+        self.starts, self.dests = train_coordinates(self.task_mode)
 
         # Create the ego vehicle blueprint
         self.ego_bp = self._create_vehicle_bluepprint(params['ego_vehicle_filter'], color='49,8,8')
@@ -89,8 +80,8 @@ class CarlaEnv(gym.Env):
         self.camera_bp.set_attribute('sensor_tick', '0.025')
 
         # Lane Invasion Sensor
-        self.lane_bp = self.world.get_blueprint_library().find('sensor.other.lane_invasion')
-        self.lane_invasion_hist = []
+        # self.lane_bp = self.world.get_blueprint_library().find('sensor.other.lane_invasion')
+        # self.lane_invasion_hist = []
 
         # Set fixed simulation step for synchronous mode
         self.settings = self.world.get_settings()
@@ -106,8 +97,156 @@ class CarlaEnv(gym.Env):
         # A list stores the ids for each episode
         self.actors = []
 
-        # The tuple (x,y) for the current waypoint
-        self.current_wpt = np.array((self.start[0], self.start[1]))
+
+    def reset(self):
+
+        # while True:
+
+        #     try:
+                # Clear sensor objects
+                self.camera_sensor = None
+                self.collision_sensor = None
+                self.lane_sensor = None
+
+                # Delete sensors, vehicles and walkers
+                while self.actors:
+                    (self.actors.pop()).destroy()
+
+                # Disable sync mode
+                self._set_synchronous_mode(False)
+
+                # Spawn the ego vehicle at a random position between start and dest
+                # Start and Destination
+                if self.task_mode == 'Straight':
+                    self.route_id = 0
+                else:
+                    self.route_id = np.random.randint(2, 4)
+                self.start = self.starts[self.route_id]
+                self.dest = self.dests[self.route_id]
+
+                # The tuple (x,y) for the current waypoint
+                self.current_wpt = np.array((self.start[0], self.start[1]))
+
+                ego_spawn_times = 0
+                while True:
+                    if ego_spawn_times > self.max_ego_spawn_times:
+                        self.reset()
+                    # if self.task_mode == 'Straight':
+                        # Code_mode == test or eval, spawn at start
+                    transform = self._set_carla_transform(self.start)
+                        # Code_mode == train, spwan randomly between start and destination
+                    if self.code_mode == 'train':
+                        transform = self._get_random_position_between(self.start, self.dest, transform)
+                    if self._try_spawn_ego_vehicle_at(transform):
+                        break
+                    else:
+                        ego_spawn_times += 1
+                        time.sleep(0.1)
+                # print("Ego car spawn Success!")
+                # self.logger.info("Ego car spawn Success!")
+
+                # Add collision sensor
+                self.collision_sensor = self.world.try_spawn_actor(self.collision_bp, carla.Transform(), attach_to=self.ego)
+                self.actors.append(self.collision_sensor)
+                self.collision_sensor.listen(lambda event: get_collision_hist(event))
+                def get_collision_hist(event):
+                    impulse = event.normal_impulse
+                    intensity = np.sqrt(impulse.x**2 + impulse.y**2 + impulse.z**2)
+                    self.collision_hist.append(intensity)
+                    if len(self.collision_hist)>self.collision_hist_l:
+                        self.collision_hist.pop(0)
+                self.collision_hist = []
+
+                # Add camera sensor
+                self.camera_sensor = self.world.spawn_actor(self.camera_bp, self.camera_trans, attach_to=self.ego)
+                self.actors.append(self.camera_sensor)
+                self.camera_sensor.listen(lambda data: get_camera_img(data))
+                def get_camera_img(data):
+                    array = np.frombuffer(data.raw_data, dtype = np.dtype("uint8"))
+                    array = np.reshape(array, (data.height, data.width, 4))
+                    array = array[:, :, :3]
+                    self.camera_img = array
+
+                # Add lane invasion sensor
+                # self.lane_sensor = self.world.spawn_actor(self.lane_bp, carla.Transform(), attach_to=self.ego)
+                # self.actors.append(self.lane_sensor)
+                # self.lane_sensor.listen(lambda event: get_lane_invasion(event))
+                # def get_lane_invasion(event):
+                #     self.lane_invasion_hist = event.crossed_lane_markings
+                #     # print("length of lane invasion: %d" % len(self.lane_invasion_hist))
+                # self.lane_invasion_hist = []
+
+                # Update timesteps
+                self.time_step=0
+                self.reset_step+=1
+
+                # Enable sync mode
+                self.settings.synchronous_mode = True
+                self.world.apply_settings(self.settings)
+
+                # Set the initial speed to desired speed
+                yaw = (self.ego.get_transform().rotation.yaw) * np.pi / 180.0
+                init_speed = carla.Vector3D(x=self.desired_speed * np.cos(yaw),
+                                            y=self.desired_speed * np.sin(yaw))
+                self.ego.set_velocity(init_speed)
+                self.world.tick()
+                self.world.tick()
+
+                # Get waypoint infomation
+                ego_x, ego_y = self._get_ego_pos()
+                ego2dest = np.array((self.dest[0]-ego_x + 1e-6, self.dest[1]-ego_y + 1e-6))
+                new_dist = np.linalg.norm(ego2dest)
+                angle_ego2dest = np.arctan(ego2dest[1]/ego2dest[0])
+                if ego2dest[0] < 0:
+                    angle_ego2dest += np.pi
+
+                self.current_wpt = self._get_waypoint_xy()
+                dyaw_dt = self.ego.get_angular_velocity().z
+
+                delta_yaw, wpt_yaw, ego_yaw = self._get_delta_yaw()
+                road_direction = np.array([np.cos(wpt_yaw/180*np.pi), np.sin(wpt_yaw/180*np.pi)])
+                ego_heading = np.float32(ego_yaw / 180.0 * np.pi)
+
+                # Update State Info (Necessary?)
+                velocity = self.ego.get_velocity()
+                accel = self.ego.get_acceleration()
+                v_t_absolute = np.array([velocity.x, velocity.y])
+                a_t_absolute = np.array([accel.x, accel.y])
+
+                # Reset action of last time step
+                # TODO:[another kind of action]
+                self.last_action = np.array([0.0, 0.0])
+
+                pos_err_vec = np.array((ego_x, ego_y)) - self.current_wpt
+
+                self.state_info['velocity_t'] = v_t_absolute
+                self.state_info['acceleration_t'] = a_t_absolute
+
+                self.state_info['ego_heading'] = ego_heading
+                self.state_info['delta_yaw_t'] = delta_yaw
+                self.state_info['dyaw_dt_t'] = dyaw_dt
+
+                self.state_info['dist_to_dest'] = new_dist
+                self.state_info['angle_to_dest'] = delta_angle_between(ego_yaw, angle_ego2dest*180/np.pi)
+
+                self.state_info['lateral_dist_t'] = np.linalg.norm(pos_err_vec) * \
+                                                    np.sign(pos_err_vec[0] * road_direction[1] - \
+                                                            pos_err_vec[1] * road_direction[0])
+                self.state_info['action_t_1'] = self.last_action
+
+                # End State variable initialized
+                self.isCollided = False
+                self.isTimeOut = False
+                self.isSuccess = False
+                self.isOutOfLane = False
+                self.isSpecialSpeed = False
+
+                return self._get_obs(), self._info2normalized_state_vector()
+
+            # except:
+            #     self.logger.error("Env reset() error")
+            #     time.sleep(2)
+            #     self._make_carla_client('localhost', self.port)
 
 
     def step(self, action):
@@ -143,34 +282,52 @@ class CarlaEnv(gym.Env):
             for _ in range(4):
                 self.world.tick()
 
-            # calculate reward
-            ego_x, ego_y = self._get_ego_pos()
-            self.new_dist = np.linalg.norm((ego_x-self.dest[0], ego_y-self.dest[1]))
-
             # Get waypoint infomation
-            self.current_wpt = self._get_waypoint_xy()
+            ego_x, ego_y = self._get_ego_pos()
+            ego2dest = np.array((self.dest[0]-ego_x + 1e-6, self.dest[1]-ego_y + 1e-6))
+            new_dist = np.linalg.norm(ego2dest)
+                # compute the angle between heading and dest
+            angle_ego2dest = np.arctan(ego2dest[1]/ego2dest[0])
+            if ego2dest[0] < 0:
+                angle_ego2dest += np.pi
 
-            delta_yaw, _ = self._get_delta_yaw()
+            self.current_wpt = self._get_waypoint_xy()
             dyaw_dt = self.ego.get_angular_velocity().z
-            # print("reward of current state:", current_reward)
+
+            delta_yaw, wpt_yaw, ego_yaw = self._get_delta_yaw()
+            road_direction = np.array([np.cos(wpt_yaw/180*np.pi), np.sin(wpt_yaw/180*np.pi)])
+            ego_heading = np.float32(ego_yaw / 180.0 * np.pi)
 
             # Update State Info (Necessary?)
             velocity = self.ego.get_velocity()
             accel = self.ego.get_acceleration()
-            self.v_t = np.array([[velocity.x], [velocity.y]])
-            self.a_t = np.array([[accel.x], [accel.y]])
+            v_t_absolute = np.array([velocity.x, velocity.y])
+            a_t_absolute = np.array([accel.x, accel.y])
 
-            self.state_info['velocity_t'] = self.v_t
-            self.state_info['acceleration_t'] = self.a_t
-            self.state_info['dist_to_dest'] = self.new_dist
+            # decompose v and a to tangential and normal
+            # v_t = _vec_decompose(v_t_absolute, road_direction)
+            # a_t = _vec_decompose(a_t_absolute, road_direction)
+
+            pos_err_vec = np.array((ego_x, ego_y)) - self.current_wpt
+
+            self.state_info['velocity_t'] = v_t_absolute
+            self.state_info['acceleration_t'] = a_t_absolute
+
+            self.state_info['ego_heading'] = ego_heading
             self.state_info['delta_yaw_t'] = delta_yaw
             self.state_info['dyaw_dt_t'] = dyaw_dt
-            self.state_info['lateral_dist_t'] = np.linalg.norm(self.current_wpt - np.array((ego_x, ego_y))) *\
-                                                np.sign(ego_y-self.current_wpt[1])
+
+            self.state_info['dist_to_dest'] = new_dist
+            self.state_info['angle_to_dest'] = delta_angle_between(ego_yaw, angle_ego2dest*180/np.pi)
+
+            self.state_info['lateral_dist_t'] = np.linalg.norm(pos_err_vec) * \
+                                                np.sign(pos_err_vec[0] * road_direction[1] - \
+                                                        pos_err_vec[1] * road_direction[0])
             self.state_info['action_t_1'] = self.last_action
 
+            # calculate reward
             isDone = self._terminal()
-            current_reward = self._get_reward()
+            current_reward = self._get_reward(np.array(action))
 
             # Update timesteps
             self.time_step += 1
@@ -187,133 +344,7 @@ class CarlaEnv(gym.Env):
 
 
 
-    def reset(self):
 
-        while True:
-
-            try:
-                # Clear sensor objects
-                self.camera_sensor = None
-                self.collision_sensor = None
-                self.lane_sensor = None
-
-                # Delete sensors, vehicles and walkers
-                while self.actors:
-                    (self.actors.pop()).destroy()
-
-                # Disable sync mode
-                self._set_synchronous_mode(False)
-
-                # Spawn the ego vehicle at a random position between start and dest
-                ego_spawn_times = 0
-                while True:
-                    if ego_spawn_times > self.max_ego_spawn_times:
-                        self.reset()
-                    if self.task_mode == 'Straight':
-                        # Code_mode == test or eval, spawn at start
-                        transform = self._set_carla_transform(self.start)
-                        # Code_mode == train, spwan randomly between start and destination
-                        if self.code_mode == 'train':
-                            transform.location = self._get_random_position_between(self.start, self.dest)
-                    if self._try_spawn_ego_vehicle_at(transform):
-                        break
-                    else:
-                        ego_spawn_times += 1
-                        time.sleep(0.1)
-                # print("Ego car spawn Success!")
-                # self.logger.info("Ego car spawn Success!")
-
-                # Add collision sensor
-                self.collision_sensor = self.world.try_spawn_actor(self.collision_bp, carla.Transform(), attach_to=self.ego)
-                self.actors.append(self.collision_sensor)
-                self.collision_sensor.listen(lambda event: get_collision_hist(event))
-                def get_collision_hist(event):
-                    impulse = event.normal_impulse
-                    intensity = np.sqrt(impulse.x**2 + impulse.y**2 + impulse.z**2)
-                    self.collision_hist.append(intensity)
-                    if len(self.collision_hist)>self.collision_hist_l:
-                        self.collision_hist.pop(0)
-                self.collision_hist = []
-
-                # Add camera sensor
-                self.camera_sensor = self.world.spawn_actor(self.camera_bp, self.camera_trans, attach_to=self.ego)
-                self.actors.append(self.camera_sensor)
-                self.camera_sensor.listen(lambda data: get_camera_img(data))
-                def get_camera_img(data):
-                    array = np.frombuffer(data.raw_data, dtype = np.dtype("uint8"))
-                    array = np.reshape(array, (data.height, data.width, 4))
-                    array = array[:, :, :3]
-                    self.camera_img = array
-
-                # Add lane invasion sensor
-                self.lane_sensor = self.world.spawn_actor(self.lane_bp, carla.Transform(), attach_to=self.ego)
-                self.actors.append(self.lane_sensor)
-                self.lane_sensor.listen(lambda event: get_lane_invasion(event))
-                def get_lane_invasion(event):
-                    self.lane_invasion_hist = event.crossed_lane_markings
-                    # print("length of lane invasion: %d" % len(self.lane_invasion_hist))
-                self.lane_invasion_hist = []
-
-                # Update timesteps
-                self.time_step=0
-                self.reset_step+=1
-
-                # Enable sync mode
-                self.settings.synchronous_mode = True
-                self.world.apply_settings(self.settings)
-
-                ego_x, ego_y = self._get_ego_pos()
-                dest_x, dest_y = self.dest[0], self.dest[1]
-                self.last_dist = np.linalg.norm((ego_x-dest_x, ego_y-dest_y))
-
-                # Set the initial speed to desired speed
-                yaw = (self.ego.get_transform().rotation.yaw) * np.pi / 180.0
-                init_speed = carla.Vector3D(x=self.desired_speed * np.cos(yaw),
-                                            y=self.desired_speed * np.sin(yaw))
-                self.ego.set_velocity(init_speed)
-                self.world.tick()
-                self.world.tick()
-
-                # Get dynamics infomation
-                velocity = self.ego.get_velocity()
-                accel = self.ego.get_acceleration()
-                self.v_t = np.array([[velocity.x], [velocity.y]])
-                self.a_t = np.array([[accel.x], [accel.y]])
-                delta_yaw, _ = self._get_delta_yaw()
-                dyaw_dt = self.ego.get_angular_velocity().z
-
-                # Get waypoint infomation
-                self.current_wpt = self._get_waypoint_xy()
-
-                # Reset action of last time step
-                # TODO:[another kind of action]
-                self.last_action = np.array([0.0, 0.0])
-
-                self.state_info['velocity_t'] = self.v_t
-                self.state_info['acceleration_t'] = self.a_t
-                self.state_info['dist_to_dest'] = self.last_dist
-                self.state_info['delta_yaw_t'] = delta_yaw
-                self.state_info['dyaw_dt_t'] = dyaw_dt
-                self.state_info['lateral_dist_t'] = np.linalg.norm(self.current_wpt - np.array((ego_x, ego_y))) *\
-                                                    np.sign(ego_y-self.current_wpt[1])
-                self.state_info['action_t_1'] = self.last_action
-
-                # End State variable initialized
-                self.isCollided = False
-                self.isTimeOut = False
-                self.isSuccess = False
-                self.isOutOfLane = False
-                self.isSpecialSpeed = False
-
-                # state_vector, _, _, _ = self.step([0.0, 0.0])
-                # state_vector, _, _, _ = self.step([0.0, 0.0])
-
-                return self._get_obs(), self._info2normalized_state_vector()
-
-            except:
-                self.logger.error("Env reset() error")
-                time.sleep(2)
-                self._make_carla_client('localhost', self.port)
 
 
     def render(self, mode='human'):
@@ -353,7 +384,8 @@ class CarlaEnv(gym.Env):
             return True
 
         # If out of lane
-        if len(self.lane_invasion_hist) > 0:
+        # if len(self.lane_invasion_hist) > 0:
+        if abs(self.state_info['lateral_dist_t']) > 0.7:
             # print("lane invasion happened! Episode Done.")
             self.logger.debug('Lane invasion happened! Episode Done.')
             self.isOutOfLane = True
@@ -362,7 +394,7 @@ class CarlaEnv(gym.Env):
         # If speed is special
         velocity = self.ego.get_velocity()
         v_norm = np.linalg.norm(np.array((velocity.x, velocity.y)))
-        if v_norm < 4:
+        if v_norm < 2:
             self.logger.debug("Speed too slow! Episode Done.")
             self.isSpecialSpeed = True
             return True
@@ -457,14 +489,19 @@ class CarlaEnv(gym.Env):
 
 
     def _get_obs(self):
-        # TODO: switch to vector version
+        # [img version]
         current_obs = self.camera_img[36:, :, :].copy()
         return np.float32(current_obs / 255.0)
 
+        # [vec version]
+        # return np.float32(self._info2normalized_state_vector())
 
-    def _get_reward(self):
+
+    def _get_reward(self, delta_action):
         """
         calculate the reward of current state
+        params:
+            action: np.array of shape(2,)
         """
         # end state
         # reward for done: collision/out/SpecislSPeed & Success
@@ -481,17 +518,16 @@ class CarlaEnv(gym.Env):
         ego_velocity = np.array([v.x, v.y])
         speed_norm = np.linalg.norm(ego_velocity)
         delta_speed = speed_norm - self.desired_speed
-        r_speed = -delta_speed**2 / 8.0
+        r_speed = -delta_speed**2 / 5.0
         # print("r_speed:", speed_norm)
 
         # reward for steer
-        delta_yaw, wpt_yaw = self._get_delta_yaw()
+        delta_yaw, _, _ = self._get_delta_yaw()
         r_steer = -100 * (delta_yaw * np.pi / 180)**2
         # print("r_steer:", delta_yaw, '------>', r_steer)
 
         # reward for action smoothness
-        current_action = self.ego.get_control()
-        r_action_regularized = - 5 * current_action.steer**2
+        r_action_regularized = - 5 * np.linalg.norm(delta_action)**2
         # print("r_action:", current_action, '------>', r_action_regularized)
 
         # reward for lateral distance to the center of road
@@ -516,7 +552,10 @@ class CarlaEnv(gym.Env):
                 self.client.set_timeout(10.0)
 
                 # Set map
-                self.world = self.client.load_world('Town01')
+                if self.task_mode == 'Straight':
+                    self.world = self.client.load_world('Town01')
+                elif self.task_mode == 'Curve':
+                    self.world = self.client.load_world('Town01')
                 self.map = self.world.get_map()
 
                 # Set weather
@@ -528,19 +567,30 @@ class CarlaEnv(gym.Env):
                 time.sleep(2)
 
 
-    def _get_random_position_between(self, start, dest):
+    def _get_random_position_between(self, start, dest, transform):
         """
         get a random carla position on the line between start and dest
         """
-        s_x, s_y, s_z = start[0], start[1], start[2]
-        d_x, d_y, d_z = dest[0], dest[1], dest[2]
+        if self.task_mode == 'Straight':
+            s_x, s_y, s_z = start[0], start[1], start[2]
+            d_x, d_y, d_z = dest[0], dest[1], dest[2]
 
-        ratio = np.random.rand()
-        new_x = (d_x - s_x) * ratio + s_x
-        new_y = (d_y - s_y) * ratio + s_y
-        new_z = (d_z - s_z) * ratio + s_z
+            ratio = np.random.rand()
+            new_x = (d_x - s_x) * ratio + s_x
+            new_y = (d_y - s_y) * ratio + s_y
+            new_z = (d_z - s_z) * ratio + s_z
 
-        return carla.Location(x=new_x, y=new_y, z=new_z)
+            transform.location = carla.Location(x=new_x, y=new_y, z=new_z)
+
+        elif self.task_mode == 'Curve':
+            start = carla.Location(x=start[0], y=start[1], z=0.22)
+            end = carla.Location(x=dest[0], y=dest[1], z=0.22)
+            ratio = float(np.random.rand() * 45)
+
+            transform = self.map.get_waypoint(location=start).next(ratio)[0].transform
+            transform.location.z = 1.4
+
+        return transform
 
 
     def _get_delta_yaw(self):
@@ -561,7 +611,7 @@ class CarlaEnv(gym.Env):
         elif -360 <= delta_yaw and delta_yaw <= -180:
             delta_yaw += 360
 
-        return delta_yaw, wpt_yaw
+        return delta_yaw, wpt_yaw, ego_yaw
 
 
     def _get_waypoint_xy(self):
@@ -581,19 +631,26 @@ class CarlaEnv(gym.Env):
         '''
         params: dict of ego state(velocity_t, accelearation_t, dist, command, delta_yaw_t, dyaw_dt_t)
         type: np.array
-        return: array of size[8,], torch.Tensor (v, a, d, dyaw, action_last)
-            remove delta_yaw & lateral_dist [from vectorized state version]
+        return: array of size[10,], torch.Tensor (v, a, d, delta_yaw, dyaw, d_lateral, action_last)
         '''
         velocity_t = self.state_info['velocity_t']
         accel_t = self.state_info['acceleration_t']
-        dist_t = self.state_info['dist_to_dest'].reshape((1,1)) / 20.0
-        # delta_yaw_t = np.array(self.state_info['delta_yaw_t']).reshape((1,1)) / 2.0
-        dyaw_dt_t = np.array(self.state_info['dyaw_dt_t']).reshape((1,1)) / 5.0
-        # lateral_dist_t = self.state_info['lateral_dist_t'].reshape((1,1)) * 10.0
-        action_last = self.state_info['action_t_1'].reshape((2, 1)) * 10.0
 
-        info_vec = np.concatenate([velocity_t, accel_t, dist_t,
-                                   dyaw_dt_t, action_last], axis=0)
+        heading = self.state_info['ego_heading'].reshape((1,)) * 5.0
+        # delta_yaw_t = np.array(self.state_info['delta_yaw_t']).reshape((1,)) / 2.0
+        dyaw_dt_t = np.array(self.state_info['dyaw_dt_t']).reshape((1,)) / 5.0
+
+        dist_t = self.state_info['dist_to_dest'].reshape((1,)) / 20.0
+        angle_t = self.state_info['angle_to_dest'].reshape((1,)) * 10.0
+
+        # lateral_dist_t = self.state_info['lateral_dist_t'].reshape((1,)) * 10.0
+        action_last = self.state_info['action_t_1'] * 10.0
+
+        info_vec = np.concatenate([velocity_t, accel_t,
+                                   heading, dyaw_dt_t,
+                                   dist_t, angle_t,
+                                   action_last],
+                                   axis=0)
         info_vec = info_vec.squeeze()
 
         return  info_vec
