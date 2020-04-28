@@ -44,6 +44,7 @@ def command2Vector(command):
 
     return command_vec
 
+
 def _vec_decompose(vec_to_be_decomposed, direction):
     """
     Decompose the vector along the direction vec
@@ -61,6 +62,7 @@ def _vec_decompose(vec_to_be_decomposed, direction):
     lat_scalar = np.linalg.norm(lat_vec) * np.sign(lat_vec[0] * direction[1] -
                                                    lat_vec[1] * direction[0])
     return np.array([lon_scalar, lat_scalar], dtype=np.float32)
+
 
 def delta_angle_between(theta_1, theta_2):
     """
