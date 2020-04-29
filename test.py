@@ -22,7 +22,7 @@ def main():
         'port': 2000,  # connection port
         'task_mode': 'Long',  # mode of the task, [random, roundabout (only for Town03)]
         'code_mode': 'train',
-        'max_time_episode': 100,  # maximum timesteps per episode
+        'max_time_episode': 200,  # maximum timesteps per episode
         'desired_speed': 15,  # desired speed (m/s)
         'max_ego_spawn_times': 100,  # maximum times to spawn ego vehicle
     }
@@ -44,7 +44,11 @@ def main():
     print(env.map.get_waypoint(location=start1))
     print(env.map.get_waypoint(location=end1))
     obs, info = env.reset()
-
+    print(obs[0:4])
+    print(obs[4]*2, obs[5]*5, obs[6]/10)
+    print(obs[7:9]/10)
+    # print(obs[9:12]/10)
+    print('--------------------------------')
 
 
     # for dist in np.arange(0.1, 100.1, 1):
@@ -62,24 +66,21 @@ def main():
     while not done:
         tac = time.time()
         if tac - tic <= 10:
-            action = [0.0, 0]
+            action = [0.0, 0.1]
             # throttle = np.random.rand(1) - 0.5
             # action = np.concatenate((throttle, np.random.uniform(low=-0.3, high=0.3, size=(1,))), axis=0)
         else:
             action = [0.0, 0]
-        print((obs[0]**2+obs[1]**2)**0.5)
-        print(obs[0:1])
-        # print(obs[4], obs[5]*2, obs[6]*5)
-        # print(obs[7]*20, obs[8]/10)
-        # print(obs[9:12]/10)
-        # print('--------------------------------')
+        # print((obs[0]**2+obs[1]**2)**0.5)
+
         obs, r, done, info = env.step(action)
         count += 1
-        # print('delta', info['delta_yaw_t'], 'angular_speed', info['dyaw_dt_t'])
-        # print(info['delta_yaw_t'], info['dyaw_dt_t'])
-        # print(np.max(obs), np.min(obs))
         ret += r
-
+        print(obs[0:4])
+        print(obs[4]*2, obs[5]*5, obs[6]/10)
+        print(obs[7:9]/10)
+        # print(obs[9:12]/10)
+        print('--------------------------------')
         # env.world.debug.draw_point(start)
         # env.world.debug.draw_point(end)
 
@@ -89,10 +90,10 @@ def main():
             print("total reward is", ret)
             print("time steps", env.time_step)
             # env.close()
-            obs, info = env.reset()
+            # obs, info = env.reset()
             ret = 0
             # print(env.ego.get_location())
-            done = False
+            # done = False
             # break
 
     # turn left

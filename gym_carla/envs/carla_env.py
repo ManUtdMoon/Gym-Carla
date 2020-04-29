@@ -173,8 +173,8 @@ class CarlaEnv(gym.Env):
                 # self.lane_invasion_hist = []
 
                 # Update timesteps
-                self.time_step=0
-                self.reset_step+=1
+                self.time_step = 1
+                self.reset_step += 1
 
                 # Enable sync mode
                 self.settings.synchronous_mode = True
@@ -278,6 +278,7 @@ class CarlaEnv(gym.Env):
             # Get waypoint infomation
             ego_x, ego_y = self._get_ego_pos()
             self.current_wpt = self._get_waypoint_xy()
+            pos_err_vec = np.array((ego_x, ego_y)) - self.current_wpt
 
             delta_yaw, wpt_yaw, ego_yaw = self._get_delta_yaw()
             road_direction = np.array([np.cos(wpt_yaw/180*np.pi), np.sin(wpt_yaw/180*np.pi)])
@@ -294,12 +295,6 @@ class CarlaEnv(gym.Env):
             # decompose v and a to tangential and normal in ego coordinates
             v_t = _vec_decompose(v_t_absolute, heading_vec)
             a_t = _vec_decompose(a_t_absolute, heading_vec)
-
-            # Reset action of last time step
-            # TODO:[another kind of action]
-            self.last_action = np.array([0.0, 0.0])
-
-            pos_err_vec = np.array((ego_x, ego_y)) - self.current_wpt
 
             self.state_info['velocity_t'] = v_t
             self.state_info['acceleration_t'] = a_t
@@ -321,7 +316,6 @@ class CarlaEnv(gym.Env):
             self.time_step += 1
             self.total_step += 1
             self.last_action = current_action
-            # print("time step %d" % self.time_step)
 
             return (self._get_obs(), current_reward, isDone, copy.deepcopy(self.state_info))
 
@@ -365,7 +359,7 @@ class CarlaEnv(gym.Env):
             # print("Time out! Episode Done.")
             self.logger.debug('Time out! Episode Done.')
             self.isTimeOut = True
-            return True
+            # return True
 
         # If out of lane
         # if len(self.lane_invasion_hist) > 0:
@@ -492,7 +486,7 @@ class CarlaEnv(gym.Env):
         # reward for done: collision/out/SpecislSPeed & Success
         r_step = 5.0
         if self.isCollided or self.isOutOfLane or self.isSpecialSpeed:
-            r_done = -500.0
+            r_done = -700.0
             return r_done
         # if self.isSuccess:
         #     r_done = 300.0
@@ -503,7 +497,7 @@ class CarlaEnv(gym.Env):
         ego_velocity = np.array([v.x, v.y])
         speed_norm = np.linalg.norm(ego_velocity)
         delta_speed = speed_norm - self.desired_speed
-        r_speed = -delta_speed**2 / 5.0
+        r_speed = -delta_speed**2 / 4.0
         # print("r_speed:", speed_norm)
 
         # reward for steer
@@ -512,7 +506,7 @@ class CarlaEnv(gym.Env):
         # print("r_steer:", delta_yaw, '------>', r_steer)
 
         # reward for action smoothness
-        r_action_regularized = - 5 * np.linalg.norm(delta_action)**2
+        r_action_regularized = - 8 * np.linalg.norm(delta_action)**2
         # print("r_action:", current_action, '------>', r_action_regularized)
 
         # reward for lateral distance to the center of road
@@ -631,7 +625,7 @@ class CarlaEnv(gym.Env):
         action_last = self.state_info['action_t_1'] * 10.0
 
         info_vec = np.concatenate([velocity_t, accel_t,
-                                   dyaw_dt_t, delta_yaw_t,
+                                   delta_yaw_t, dyaw_dt_t,
                                    lateral_dist_t, action_last],
                                    axis=0)
         info_vec = info_vec.squeeze()
