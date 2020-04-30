@@ -339,15 +339,15 @@ class CarlaEnv(gym.Env):
     def _terminal(self):
         """Calculate whether to terminate the current episode."""
         # Get ego state
-        ego_x, ego_y = self._get_ego_pos()
+        # ego_x, ego_y = self._get_ego_pos()
 
-        # If at destination
-        dest = self.dest
-        if np.sqrt((ego_x-dest[0])**2+(ego_y-dest[1])**2) < 2.0:
-            # print("Get destination! Episode Done.")
-            self.logger.debug('Get destination! Episode Done.')
-            self.isSuccess = True
-            return True
+        # # If at destination
+        # dest = self.dest
+        # if np.sqrt((ego_x-dest[0])**2+(ego_y-dest[1])**2) < 2.0:
+        #     # print("Get destination! Episode Done.")
+        #     self.logger.debug('Get destination! Episode Done.')
+        #     self.isSuccess = True
+        #     return True
 
         # If collides
         if len(self.collision_hist) > 0:
