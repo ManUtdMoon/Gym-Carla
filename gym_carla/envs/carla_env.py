@@ -118,14 +118,16 @@ class CarlaEnv(gym.Env):
                 # Spawn the ego vehicle at a random position between start and dest
                 # Start and Destination
                 if self.task_mode == 'Straight':
-                    self.route_id = 1
-                else: # Curve or Long
+                    self.route_id = 0
+                elif self.task_mode == 'Curve': # Curve or Long
+                    self.route_id = np.random.randint(2, 4)
+                elif self.task_mode == 'Long':
                     self.route_id = np.random.randint(4)
                 self.start = self.starts[self.route_id]
                 self.dest = self.dests[self.route_id]
 
                 # The tuple (x,y) for the current waypoint
-                self.current_wpt = np.array((self.start[0], self.start[1]))
+                self.current_wpt = np.array((self.start[0], self.start[1], self.start[5]))
 
                 ego_spawn_times = 0
                 while True:
@@ -190,7 +192,7 @@ class CarlaEnv(gym.Env):
 
                 # Get waypoint infomation
                 ego_x, ego_y = self._get_ego_pos()
-                self.current_wpt = self._get_waypoint_xy()
+                self.current_wpt = self._get_waypoint_xyz()
 
                 delta_yaw, wpt_yaw, ego_yaw = self._get_delta_yaw()
                 road_direction = np.array([np.cos(wpt_yaw/180*np.pi), np.sin(wpt_yaw/180*np.pi)])
@@ -212,7 +214,7 @@ class CarlaEnv(gym.Env):
                 # TODO:[another kind of action]
                 self.last_action = np.array([0.0, 0.0])
 
-                pos_err_vec = np.array((ego_x, ego_y)) - self.current_wpt
+                pos_err_vec = np.array((ego_x, ego_y)) - self.current_wpt[0:2]
 
                 self.state_info['velocity_t'] = v_t
                 self.state_info['acceleration_t'] = a_t
@@ -277,8 +279,8 @@ class CarlaEnv(gym.Env):
 
             # Get waypoint infomation
             ego_x, ego_y = self._get_ego_pos()
-            self.current_wpt = self._get_waypoint_xy()
-            pos_err_vec = np.array((ego_x, ego_y)) - self.current_wpt
+            self.current_wpt = self._get_waypoint_xyz()
+            pos_err_vec = np.array((ego_x, ego_y)) - self.current_wpt[0:2]
 
             delta_yaw, wpt_yaw, ego_yaw = self._get_delta_yaw()
             road_direction = np.array([np.cos(wpt_yaw/180*np.pi), np.sin(wpt_yaw/180*np.pi)])
@@ -337,15 +339,15 @@ class CarlaEnv(gym.Env):
     def _terminal(self):
         """Calculate whether to terminate the current episode."""
         # Get ego state
-        # ego_x, ego_y = self._get_ego_pos()
+        ego_x, ego_y = self._get_ego_pos()
 
         # If at destination
-        # dest = self.dest
-        # if np.sqrt((ego_x-dest[0])**2+(ego_y-dest[1])**2) < 2.0:
-        #     # print("Get destination! Episode Done.")
-        #     self.logger.debug('Get destination! Episode Done.')
-        #     self.isSuccess = True
-        #     return True
+        dest = self.dest
+        if np.sqrt((ego_x-dest[0])**2+(ego_y-dest[1])**2) < 2.0:
+            # print("Get destination! Episode Done.")
+            self.logger.debug('Get destination! Episode Done.')
+            self.isSuccess = True
+            return True
 
         # If collides
         if len(self.collision_hist) > 0:
@@ -372,7 +374,7 @@ class CarlaEnv(gym.Env):
         # If speed is special
         velocity = self.ego.get_velocity()
         v_norm = np.linalg.norm(np.array((velocity.x, velocity.y)))
-        if v_norm < 10:
+        if v_norm < 5:
             # pass
             self.logger.debug("Speed too slow! Episode Done.")
             self.isSpecialSpeed = True
@@ -555,7 +557,7 @@ class CarlaEnv(gym.Env):
             new_y = (d_y - s_y) * ratio + s_y
             new_z = (d_z - s_z) * ratio + s_z
 
-            transform.location = carla.Location(x=new_x, y=new_y, z=new_z)
+            transform.location = carla.Location(x=new_x, y=new_y, z=1.0)
 
         elif self.task_mode == 'Curve':
             start = carla.Location(x=start[0], y=start[1], z=0.22)
@@ -563,13 +565,13 @@ class CarlaEnv(gym.Env):
             ratio = float(np.random.rand() * 45)
 
             transform = self.map.get_waypoint(location=start).next(ratio)[0].transform
-            transform.location.z = 1.4
+            transform.location.z = 1.2
 
         elif self.task_mode == 'Long':
             start = carla.Location(x=start[0], y=start[1], z=0.22)
             ratio = float(np.random.rand() * 70)
             transform = self.map.get_waypoint(location=start).next(ratio)[0].transform
-            transform.location.z = 1.4
+            transform.location.z = 1.0
 
         return transform
 
@@ -581,7 +583,7 @@ class CarlaEnv(gym.Env):
         current_wpt = self.map.get_waypoint(location=self.ego.get_location())
         if not current_wpt:
             self.logger.error('Fail to find a waypoint')
-            wpt_yaw = self.start[5] % 360
+            wpt_yaw = self.current_wpt[2] % 360
         else:
             wpt_yaw = current_wpt.transform.rotation.yaw % 360
         ego_yaw = self.ego.get_transform().rotation.yaw % 360
@@ -595,7 +597,7 @@ class CarlaEnv(gym.Env):
         return delta_yaw, wpt_yaw, ego_yaw
 
 
-    def _get_waypoint_xy(self):
+    def _get_waypoint_xyz(self):
         """
         Get the (x,y) waypoint of current ego position
             if t != 0 and None, return the wpt of last moment
@@ -603,7 +605,9 @@ class CarlaEnv(gym.Env):
         """
         waypoint = self.map.get_waypoint(location=self.ego.get_location())
         if waypoint:
-            return np.array((waypoint.transform.location.x, waypoint.transform.location.y))
+            return np.array((waypoint.transform.location.x,
+                             waypoint.transform.location.y,
+                             waypoint.transform.rotation.yaw))
         else:
             return self.current_wpt
 

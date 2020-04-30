@@ -20,7 +20,7 @@ def main():
         'dt': 0.025,  # time interval between two frames
         'ego_vehicle_filter': 'vehicle.lincoln*',  # filter for defining ego vehicle
         'port': 2000,  # connection port
-        'task_mode': 'Long',  # mode of the task, [random, roundabout (only for Town03)]
+        'task_mode': 'Curve',  # mode of the task, [random, roundabout (only for Town03)]
         'code_mode': 'train',
         'max_time_episode': 200,  # maximum timesteps per episode
         'desired_speed': 15,  # desired speed (m/s)
@@ -29,27 +29,21 @@ def main():
 
     # Set gym-carla environment
     env = gym.make('carla-v0', params=params)
-    start0 = carla.Location(x=env.starts[2][0], y=env.starts[2][1], z=env.starts[2][2])
-    end0 = carla.Location(x=env.dests[2][0], y=env.dests[2][1], z=env.dests[2][2])
-    env.world.debug.draw_point(start0)
-    env.world.debug.draw_point(end0)
+    # start0 = carla.Location(x=env.starts[2][0], y=env.starts[2][1], z=env.starts[2][2])
+    # end0 = carla.Location(x=env.dests[2][0], y=env.dests[2][1], z=env.dests[2][2])
+    # env.world.debug.draw_point(start0)
+    # env.world.debug.draw_point(end0)
 
-    start1 = carla.Location(x=env.starts[3][0], y=env.starts[3][1], z=env.starts[3][2])
-    end1 = carla.Location(x=env.dests[3][0], y=env.dests[3][1], z=env.dests[3][2])
-    env.world.debug.draw_point(start1, color=carla.Color(0,0,255))
-    env.world.debug.draw_point(end1, color=carla.Color(0,0,255))
+    # start1 = carla.Location(x=env.starts[3][0], y=env.starts[3][1], z=env.starts[3][2])
+    # end1 = carla.Location(x=env.dests[3][0], y=env.dests[3][1], z=env.dests[3][2])
+    # env.world.debug.draw_point(start1, color=carla.Color(0,0,255))
+    # env.world.debug.draw_point(end1, color=carla.Color(0,0,255))
 
-    print(env.map.get_waypoint(location=start0))
-    print(env.map.get_waypoint(location=end0))
-    print(env.map.get_waypoint(location=start1))
-    print(env.map.get_waypoint(location=end1))
+    # print(env.map.get_waypoint(location=start0))
+    # print(env.map.get_waypoint(location=end0))
+    # print(env.map.get_waypoint(location=start1))
+    # print(env.map.get_waypoint(location=end1))
     obs, info = env.reset()
-    print(obs[0:4])
-    print(obs[4]*2, obs[5]*5, obs[6]/10)
-    print(obs[7:9]/10)
-    # print(obs[9:12]/10)
-    print('--------------------------------')
-
 
     # for dist in np.arange(0.1, 100.1, 1):
     #     wpt = env.map.get_waypoint(location=start).next(dist)[0]
@@ -63,10 +57,16 @@ def main():
     ret = 0
     count = 1
 
-    while not done:
+    while not (done or env.isTimeOut):
+        print(obs[0:4])
+        print(obs[4]*2, 'deg', obs[5]*5, 'deg/s', obs[6]/10, 'm')
+        print(obs[7:9]/10)
+        # print(obs[9:12]/10)
+        print('--------------------------------')
+
         tac = time.time()
         if tac - tic <= 10:
-            action = [0.0, 0.1]
+            action = [0.0, 0.]
             # throttle = np.random.rand(1) - 0.5
             # action = np.concatenate((throttle, np.random.uniform(low=-0.3, high=0.3, size=(1,))), axis=0)
         else:
@@ -77,23 +77,24 @@ def main():
         count += 1
         ret += r
         print(obs[0:4])
-        print(obs[4]*2, obs[5]*5, obs[6]/10)
+        print(obs[4]*2, 'deg', obs[5]*5, 'deg/s', obs[6]/10, 'm')
         print(obs[7:9]/10)
         # print(obs[9:12]/10)
         print('--------------------------------')
         # env.world.debug.draw_point(start)
         # env.world.debug.draw_point(end)
 
-        if done:
+        if done or env.isTimeOut:
             toc = time.time()
             print("An episode took %f s" %(toc - tic))
             print("total reward is", ret)
             print("time steps", env.time_step)
             # env.close()
-            # obs, info = env.reset()
+
             ret = 0
             # print(env.ego.get_location())
-            # done = False
+            done = False
+            obs, info = env.reset()
             # break
 
     # turn left
