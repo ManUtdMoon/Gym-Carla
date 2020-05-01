@@ -20,9 +20,9 @@ def main():
         'dt': 0.025,  # time interval between two frames
         'ego_vehicle_filter': 'vehicle.lincoln*',  # filter for defining ego vehicle
         'port': 2000,  # connection port
-        'task_mode': 'Curve',  # mode of the task, [random, roundabout (only for Town03)]
+        'task_mode': 'Long',  # mode of the task, [random, roundabout (only for Town03)]
         'code_mode': 'train',
-        'max_time_episode': 200,  # maximum timesteps per episode
+        'max_time_episode': 100,  # maximum timesteps per episode
         'desired_speed': 15,  # desired speed (m/s)
         'max_ego_spawn_times': 100,  # maximum times to spawn ego vehicle
     }
@@ -44,7 +44,11 @@ def main():
     # print(env.map.get_waypoint(location=start1))
     # print(env.map.get_waypoint(location=end1))
     obs, info = env.reset()
-
+    print('car:', obs[0:2], '\nabsolute', env.ego.get_velocity().x, env.ego.get_velocity().y)
+    print(obs[4]*2, 'deg', obs[5]*5, 'deg/s', obs[6]/10, 'm')
+    print(obs[7:9]/10)
+    # print(obs[9:12]/10)
+    print('--------------------------------')
     # for dist in np.arange(0.1, 100.1, 1):
     #     wpt = env.map.get_waypoint(location=start).next(dist)[0]
     #     env.world.debug.draw_point(wpt.transform.location)
@@ -58,25 +62,15 @@ def main():
     count = 1
 
     while not (done or env.isTimeOut):
-        print(obs[0:4])
-        print(obs[4]*2, 'deg', obs[5]*5, 'deg/s', obs[6]/10, 'm')
-        print(obs[7:9]/10)
-        # print(obs[9:12]/10)
-        print('--------------------------------')
-
         tac = time.time()
-        if tac - tic <= 10:
-            action = [0.0, 0.]
-            # throttle = np.random.rand(1) - 0.5
-            # action = np.concatenate((throttle, np.random.uniform(low=-0.3, high=0.3, size=(1,))), axis=0)
-        else:
-            action = [0.0, 0]
-        # print((obs[0]**2+obs[1]**2)**0.5)
+        action = [0.0, -0]
+        # throttle = np.array([0]) # np.random.rand(1) - 0.5
+        # action = np.concatenate((throttle, np.random.uniform(low=-0.01, high=0.01, size=(1,))), axis=0)
 
         obs, r, done, info = env.step(action)
         count += 1
         ret += r
-        print(obs[0:4])
+        print('car:', obs[0:2], '\nabsolute', env.ego.get_velocity().x, env.ego.get_velocity().y)
         print(obs[4]*2, 'deg', obs[5]*5, 'deg/s', obs[6]/10, 'm')
         print(obs[7:9]/10)
         # print(obs[9:12]/10)
