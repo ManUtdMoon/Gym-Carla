@@ -489,7 +489,7 @@ class CarlaEnv(gym.Env):
         current_obs = np.uint16(self.camera_img[36:, :, :].copy())
         obs_gray = (11*current_obs[:,:,0] + 59*current_obs[:,:,1] + 30*current_obs[:,:,2] + 50) / 100.0
         # obs_gray = (11*current_obs[:,:,2] + 59*current_obs[:,:,1] + 30*current_obs[:,:,0] + 50) / 100.0
-        return np.float32(obs_gray / 255.0)
+        return np.float32(np.expand_dims(obs_gray, axis=0) / 255.0)
 
         # [vec version]
         # return np.float32(self._info2normalized_state_vector())

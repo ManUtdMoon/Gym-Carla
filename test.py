@@ -37,7 +37,7 @@ def main():
     # print(env.map.get_waypoint(location=start))
     # print(env.map.get_waypoint(location=end))
     obs, info = env.reset()
-    print(info)
+    print(obs.shape)
 
     tic = time.time()
     done = False
@@ -55,7 +55,7 @@ def main():
         else:
             action = [0.0, 0]
 
-        cv2.imshow('img', obs)
+        cv2.imshow('img', obs.squeeze())
         cv2.waitKey(1)
 
         # print(obs[4], obs[5]*2, obs[6]*5)
