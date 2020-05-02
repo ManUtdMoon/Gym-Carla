@@ -1014,3 +1014,44 @@
 2020-05-01 19:07:04 DEBUG    Lane invasion happened! Episode Done.
 2020-05-01 19:07:22 DEBUG    Time out! Episode Done.
 2020-05-01 19:07:27 DEBUG    Lane invasion happened! Episode Done.
+2020-05-02 09:30:27 INFO     Env running in port 2000
+2020-05-02 09:30:27 INFO     connecting to Carla server...
+2020-05-02 09:30:38 ERROR    Fail to connect to carla-server...sleeping for 2
+2020-05-02 09:30:40 INFO     connecting to Carla server...
+2020-05-02 09:30:41 INFO     Carla server port 2000 connected!
+2020-05-02 09:30:48 DEBUG    This episode cost 39 steps.
+2020-05-02 09:30:48 DEBUG    Lane invasion happened! Episode Done.
+2020-05-02 09:30:53 DEBUG    This episode cost 31 steps.
+2020-05-02 09:30:53 DEBUG    Lane invasion happened! Episode Done.
+2020-05-02 09:30:58 DEBUG    This episode cost 25 steps.
+2020-05-02 09:30:58 DEBUG    Lane invasion happened! Episode Done.
+2020-05-02 09:31:03 DEBUG    This episode cost 29 steps.
+2020-05-02 09:31:03 DEBUG    Lane invasion happened! Episode Done.
+2020-05-02 09:31:10 DEBUG    This episode cost 39 steps.
+2020-05-02 09:31:10 DEBUG    Lane invasion happened! Episode Done.
+2020-05-02 09:31:15 DEBUG    This episode cost 31 steps.
+2020-05-02 09:31:15 DEBUG    Lane invasion happened! Episode Done.
+2020-05-02 09:31:20 DEBUG    This episode cost 25 steps.
+2020-05-02 09:31:20 DEBUG    Lane invasion happened! Episode Done.
+2020-05-02 09:31:25 DEBUG    This episode cost 29 steps.
+2020-05-02 09:31:25 DEBUG    Lane invasion happened! Episode Done.
+2020-05-02 09:31:32 DEBUG    This episode cost 39 steps.
+2020-05-02 09:31:32 DEBUG    Lane invasion happened! Episode Done.
+2020-05-02 09:31:37 DEBUG    This episode cost 31 steps.
+2020-05-02 09:31:37 DEBUG    Lane invasion happened! Episode Done.
+2020-05-02 09:31:42 DEBUG    This episode cost 25 steps.
+2020-05-02 09:31:42 DEBUG    Lane invasion happened! Episode Done.
+2020-05-02 09:31:47 DEBUG    This episode cost 29 steps.
+2020-05-02 09:31:47 DEBUG    Lane invasion happened! Episode Done.
+2020-05-02 09:31:54 DEBUG    This episode cost 39 steps.
+2020-05-02 09:31:54 DEBUG    Lane invasion happened! Episode Done.
+2020-05-02 09:31:59 DEBUG    This episode cost 31 steps.
+2020-05-02 09:31:59 DEBUG    Lane invasion happened! Episode Done.
+2020-05-02 09:32:04 DEBUG    This episode cost 25 steps.
+2020-05-02 09:32:04 DEBUG    Lane invasion happened! Episode Done.
+2020-05-02 09:32:09 DEBUG    This episode cost 29 steps.
+2020-05-02 09:32:09 DEBUG    Lane invasion happened! Episode Done.
+2020-05-02 09:32:16 DEBUG    This episode cost 39 steps.
+2020-05-02 09:32:16 DEBUG    Lane invasion happened! Episode Done.
+2020-05-02 09:32:22 DEBUG    This episode cost 31 steps.
+2020-05-02 09:32:22 DEBUG    Lane invasion happened! Episode Done.

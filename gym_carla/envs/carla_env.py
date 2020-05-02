@@ -57,8 +57,9 @@ class CarlaEnv(gym.Env):
         # print('connecting to Carla server...')
         self._make_carla_client('localhost', self.port)
 
-        # Get destination
+        # Load routes
         self.starts, self.dests = train_coordinates(self.task_mode)
+        self.route_deterministic_id = 0
 
         # Create the ego vehicle blueprint
         self.ego_bp = self._create_vehicle_bluepprint(params['ego_vehicle_filter'], color='49,8,8')
@@ -100,9 +101,9 @@ class CarlaEnv(gym.Env):
 
     def reset(self):
 
-        # while True:
+        while True:
 
-        #     try:
+            try:
                 # Clear sensor objects
                 # self.camera_sensor = None
                 self.collision_sensor = None
@@ -122,7 +123,11 @@ class CarlaEnv(gym.Env):
                 elif self.task_mode == 'Curve':
                     self.route_id = np.random.randint(2, 4)
                 elif self.task_mode == 'Long':
-                    self.route_id = np.random.randint(3, 4)
+                    if self.code_mode == 'train':
+                        self.route_id = np.random.randint(3, 4)
+                    elif self.code_mode == 'test':
+                        self.route_id = self.route_deterministic_id
+                        self.route_deterministic_id = (self.route_deterministic_id + 1) % 4
                 self.start = self.starts[self.route_id]
                 self.dest = self.dests[self.route_id]
 
@@ -237,10 +242,10 @@ class CarlaEnv(gym.Env):
 
                 return self._get_obs(), copy.deepcopy(self.state_info)
 
-            # except:
-            #     self.logger.error("Env reset() error")
-            #     time.sleep(2)
-            #     self._make_carla_client('localhost', self.port)
+            except:
+                self.logger.error("Env reset() error")
+                time.sleep(2)
+                self._make_carla_client('localhost', self.port)
 
 
 
@@ -311,14 +316,14 @@ class CarlaEnv(gym.Env):
                                                         pos_err_vec[1] * road_heading[0])
             self.state_info['action_t_1'] = self.last_action
 
-            # calculate reward
-            isDone = self._terminal()
-            current_reward = self._get_reward(np.array(action))
-
             # Update timesteps
             self.time_step += 1
             self.total_step += 1
             self.last_action = current_action
+
+            # calculate reward
+            isDone = self._terminal()
+            current_reward = self._get_reward(np.array(action))
 
             return (self._get_obs(), current_reward, isDone, copy.deepcopy(self.state_info))
 
@@ -353,6 +358,8 @@ class CarlaEnv(gym.Env):
         # If collides
         if len(self.collision_hist) > 0:
             # print("Collision happened! Episode Done.")
+            if self.code_mode == 'test':
+                self.logger.debug('This episode cost %d steps.' % (self.time_step))
             self.logger.debug('Collision happened! Episode Done.')
             self.isCollided = True
             return True
@@ -360,6 +367,8 @@ class CarlaEnv(gym.Env):
         # If reach maximum timestep
         if self.time_step >= self.max_time_episode:
             # print("Time out! Episode Done.")
+            if self.code_mode == 'test':
+                self.logger.debug('This episode cost %d steps.' % (self.time_step))
             self.logger.debug('Time out! Episode Done.')
             self.isTimeOut = True
             # return True
@@ -368,6 +377,8 @@ class CarlaEnv(gym.Env):
         # if len(self.lane_invasion_hist) > 0:
         if abs(self.state_info['lateral_dist_t']) > 1.0:
             # print("lane invasion happened! Episode Done.")
+            if self.code_mode == 'test':
+                self.logger.debug('This episode cost %d steps.' % (self.time_step))
             self.logger.debug('Lane invasion happened! Episode Done.')
             self.isOutOfLane = True
             return True
@@ -377,10 +388,14 @@ class CarlaEnv(gym.Env):
         v_norm = np.linalg.norm(np.array((velocity.x, velocity.y)))
         if v_norm < 8:
             # pass
+            if self.code_mode == 'test':
+                self.logger.debug('This episode cost %d steps.' % (self.time_step))
             self.logger.debug("Speed too slow! Episode Done.")
             self.isSpecialSpeed = True
             return True
         elif v_norm > 20:
+            if self.code_mode == 'test':
+                self.logger.debug('This episode cost %d steps.' % (self.time_step))
             self.logger.debug("Speed too fast! Episode Done.")
             self.isSpecialSpeed = True
             return True
