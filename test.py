@@ -20,8 +20,8 @@ def main():
         'dt': 0.025,  # time interval between two frames
         'ego_vehicle_filter': 'vehicle.lincoln*',  # filter for defining ego vehicle
         'port': 2000,  # connection port
-        'task_mode': 'Long',  # mode of the task, [random, roundabout (only for Town03)]
-        'code_mode': 'test',
+        'task_mode': 'Straight',  # mode of the task, [random, roundabout (only for Town03)]
+        'code_mode': 'train',
         'max_time_episode': 50,  # maximum timesteps per episode
         'desired_speed': 15,  # desired speed (m/s)
         'max_ego_spawn_times': 100,  # maximum times to spawn ego vehicle
@@ -63,14 +63,14 @@ def main():
 
     while not (done or env.isTimeOut):
         tac = time.time()
-        action = [0.0, -0]
+        action = [0.0, 0.1]
         # throttle = np.array([0]) # np.random.rand(1) - 0.5
         # action = np.concatenate((throttle, np.random.uniform(low=-0.01, high=0.01, size=(1,))), axis=0)
 
         obs, r, done, info = env.step(action)
         count += 1
         ret += r
-        print('car:', obs[0:2], '\nabsolute', env.ego.get_velocity().x, env.ego.get_velocity().y)
+        print('car:', obs[0:4], '\nabsolute', env.ego.get_velocity().x, env.ego.get_velocity().y)
         print(obs[4]*2, 'deg', obs[5]*5, 'deg/s', obs[6]/10, 'm')
         print(obs[7:9]/10)
         # print(obs[9:12]/10)
@@ -87,8 +87,8 @@ def main():
 
             ret = 0
             # print(env.ego.get_location())
-            done = False
-            obs, info = env.reset()
+            # done = False
+            # obs, info = env.reset()
             # break
 
     # turn left
