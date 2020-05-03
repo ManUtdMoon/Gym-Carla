@@ -51,7 +51,7 @@ class CarlaEnv(gym.Env):
         self.action_space = spaces.Box(np.array([-2.0, -2.0]),
             np.array([2.0, 2.0]), dtype=np.float32)
         self.state_space = spaces.Box(low=-50.0, high=50.0,
-            shape=(9,), dtype=np.float32)
+            shape=(12,), dtype=np.float32)
 
         # Connect to carla server and get world object
         # print('connecting to Carla server...')
@@ -98,6 +98,9 @@ class CarlaEnv(gym.Env):
         # A list stores the ids for each episode
         self.actors = []
 
+        # Future distances to get heading
+        self.distances = [1., 5., 10.]
+
 
     def reset(self):
 
@@ -124,7 +127,7 @@ class CarlaEnv(gym.Env):
                     self.route_id = np.random.randint(2, 4)
                 elif self.task_mode == 'Long':
                     if self.code_mode == 'train':
-                        self.route_id = np.random.randint(0, 4)
+                        self.route_id = 2 # np.random.randint(0, 4)
                     elif self.code_mode == 'test':
                         self.route_id = self.route_deterministic_id
                         self.route_deterministic_id = (self.route_deterministic_id + 1) % 4
@@ -204,6 +207,8 @@ class CarlaEnv(gym.Env):
                 ego_heading = np.float32(ego_yaw / 180.0 * np.pi)
                 ego_heading_vec = np.array([np.cos(ego_heading), np.sin(ego_heading)])
 
+                future_angles = self._get_future_wpt_angle(distances=self.distances)
+
                 # Update State Info (Necessary?)
                 velocity = self.ego.get_velocity()
                 accel = self.ego.get_acceleration()
@@ -232,6 +237,7 @@ class CarlaEnv(gym.Env):
                                                     np.sign(pos_err_vec[0] * road_heading[1] - \
                                                             pos_err_vec[1] * road_heading[0])
                 self.state_info['action_t_1'] = self.last_action
+                self.state_info['angles_t'] = future_angles
 
                 # End State variable initialized
                 self.isCollided = False
@@ -291,6 +297,8 @@ class CarlaEnv(gym.Env):
             ego_heading = np.float32(ego_yaw / 180.0 * np.pi)
             ego_heading_vec = np.array((np.cos(ego_heading), np.sin(ego_heading)))
 
+            future_angles = self._get_future_wpt_angle(distances=self.distances)
+
             # Get dynamics info
             velocity = self.ego.get_velocity()
             accel = self.ego.get_acceleration()
@@ -315,6 +323,7 @@ class CarlaEnv(gym.Env):
                                                 np.sign(pos_err_vec[0] * road_heading[1] - \
                                                         pos_err_vec[1] * road_heading[0])
             self.state_info['action_t_1'] = self.last_action
+            self.state_info['angles_t'] = future_angles
 
             # Update timesteps
             self.time_step += 1
@@ -625,12 +634,37 @@ class CarlaEnv(gym.Env):
             return self.current_wpt
 
 
+    def _get_future_wpt_angle(self, distances):
+        """
+        Get next wpts in distances
+        params:
+            distances: list of int/float, the dist of wpt which user wants to get
+        return:
+            future_angles: np.array, <current_wpt, wpt(dist_i)> correspond to the dist in distances
+        """
+        angles = []
+        current_wpt = self.map.get_waypoint(location=self.ego.get_location())
+        if not current_wpt:
+            self.logger.error('Fail to find a waypoint')
+            current_road_heading = self.current_wpt[3]
+        else:
+            current_road_heading = current_wpt.transform.rotation.yaw
+
+        for d in distances:
+            wpt_heading = current_wpt.next(d)[0].transform.rotation.yaw
+            delta_heading = delta_angle_between(current_road_heading, wpt_heading)
+            angles.append(delta_heading)
+
+        return np.array(angles, dtype=np.float32)
+
+
     def _info2normalized_state_vector(self):
         '''
         params: dict of ego state(velocity_t, accelearation_t, dist, command, delta_yaw_t, dyaw_dt_t)
         type: np.array
         return: array of size[9,], torch.Tensor (v_x, v_y, a_x, a_y
-                                                 delta_yaw, dyaw, d_lateral, action_last)
+                                                 delta_yaw, dyaw, d_lateral, action_last,
+                                                 future_angles)
         '''
         velocity_t = self.state_info['velocity_t']
         accel_t = self.state_info['acceleration_t']
@@ -641,10 +675,14 @@ class CarlaEnv(gym.Env):
         lateral_dist_t = self.state_info['lateral_dist_t'].reshape((1,)) * 10.0
         action_last = self.state_info['action_t_1'] * 10.0
 
+        future_angles = self.state_info['angles_t'] / 2.0
+
         info_vec = np.concatenate([velocity_t, accel_t,
                                    delta_yaw_t, dyaw_dt_t,
-                                   lateral_dist_t, action_last],
+                                   lateral_dist_t, action_last,
+                                   future_angles],
                                    axis=0)
         info_vec = info_vec.squeeze()
 
         return  info_vec
+

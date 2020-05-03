@@ -41,3 +41,110 @@
 2020-05-03 15:30:16 INFO     connecting to Carla server...
 2020-05-03 15:30:17 INFO     Carla server port 2000 connected!
 2020-05-03 15:30:18 DEBUG    Right Lane invasion! Episode cost 8 steps in route 0.
+2020-05-03 16:27:45 INFO     Env running in port 2000
+2020-05-03 16:27:45 INFO     connecting to Carla server...
+2020-05-03 16:27:56 ERROR    Fail to connect to carla-server...sleeping for 2
+2020-05-03 16:27:58 INFO     connecting to Carla server...
+2020-05-03 16:27:59 INFO     Carla server port 2000 connected!
+2020-05-03 16:28:07 DEBUG    Right Lane invasion! Episode cost 46 steps in route 0.
+2020-05-03 16:28:15 DEBUG    Right Lane invasion! Episode cost 45 steps in route 0.
+2020-05-03 16:28:17 DEBUG    Right Lane invasion! Episode cost 13 steps in route 0.
+2020-05-03 16:28:26 DEBUG    Time out! Episode cost 50 steps in route 0.
+2020-05-03 16:28:27 DEBUG    Right Lane invasion! Episode cost 6 steps in route 0.
+2020-05-03 16:28:33 DEBUG    Right Lane invasion! Episode cost 32 steps in route 0.
+2020-05-03 16:28:40 DEBUG    Right Lane invasion! Episode cost 41 steps in route 0.
+2020-05-03 16:28:45 DEBUG    Right Lane invasion! Episode cost 28 steps in route 0.
+2020-05-03 16:28:46 DEBUG    Right Lane invasion! Episode cost 6 steps in route 0.
+2020-05-03 16:28:53 DEBUG    Right Lane invasion! Episode cost 39 steps in route 0.
+2020-05-03 16:29:00 DEBUG    Right Lane invasion! Episode cost 37 steps in route 0.
+2020-05-03 16:29:03 DEBUG    Right Lane invasion! Episode cost 20 steps in route 0.
+2020-05-03 16:29:04 DEBUG    Right Lane invasion! Episode cost 6 steps in route 0.
+2020-05-03 16:29:05 DEBUG    Right Lane invasion! Episode cost 6 steps in route 0.
+2020-05-03 16:29:09 DEBUG    Right Lane invasion! Episode cost 20 steps in route 0.
+2020-05-03 16:29:17 DEBUG    Right Lane invasion! Episode cost 49 steps in route 0.
+2020-05-03 16:29:22 DEBUG    Right Lane invasion! Episode cost 24 steps in route 0.
+2020-05-03 16:29:27 DEBUG    Right Lane invasion! Episode cost 29 steps in route 0.
+2020-05-03 16:29:35 DEBUG    Right Lane invasion! Episode cost 49 steps in route 0.
+2020-05-03 16:29:38 DEBUG    Right Lane invasion! Episode cost 16 steps in route 0.
+2020-05-03 16:29:46 DEBUG    Right Lane invasion! Episode cost 42 steps in route 0.
+2020-05-03 16:29:47 DEBUG    Right Lane invasion! Episode cost 10 steps in route 0.
+2020-05-03 16:29:54 DEBUG    Right Lane invasion! Episode cost 39 steps in route 0.
+2020-05-03 16:30:04 INFO     Env running in port 2000
+2020-05-03 16:30:04 INFO     connecting to Carla server...
+2020-05-03 16:30:06 INFO     Carla server port 2000 connected!
+2020-05-03 16:30:11 DEBUG    Left Lane invasion! Episode cost 30 steps in route 1.
+2020-05-03 16:30:19 DEBUG    Time out! Episode cost 50 steps in route 1.
+2020-05-03 16:30:20 DEBUG    Left Lane invasion! Episode cost 6 steps in route 1.
+2020-05-03 16:30:28 DEBUG    Left Lane invasion! Episode cost 45 steps in route 1.
+2020-05-03 16:30:32 DEBUG    Left Lane invasion! Episode cost 19 steps in route 1.
+2020-05-03 16:30:33 DEBUG    Left Lane invasion! Episode cost 6 steps in route 1.
+2020-05-03 16:30:34 DEBUG    Left Lane invasion! Episode cost 6 steps in route 1.
+2020-05-03 16:30:34 DEBUG    Left Lane invasion! Episode cost 5 steps in route 1.
+2020-05-03 16:30:37 DEBUG    Left Lane invasion! Episode cost 17 steps in route 1.
+2020-05-03 16:30:42 DEBUG    Left Lane invasion! Episode cost 26 steps in route 1.
+2020-05-03 16:30:51 DEBUG    Time out! Episode cost 50 steps in route 1.
+2020-05-03 16:30:53 DEBUG    Left Lane invasion! Episode cost 10 steps in route 1.
+2020-05-03 16:30:53 DEBUG    Left Lane invasion! Episode cost 5 steps in route 1.
+2020-05-03 16:30:54 DEBUG    Left Lane invasion! Episode cost 5 steps in route 1.
+2020-05-03 16:33:35 INFO     Env running in port 2000
+2020-05-03 16:33:35 INFO     connecting to Carla server...
+2020-05-03 16:33:36 INFO     Carla server port 2000 connected!
+2020-05-03 16:33:37 DEBUG    Time out! Episode cost 10 steps in route 0.
+2020-05-03 16:33:39 DEBUG    Time out! Episode cost 10 steps in route 1.
+2020-05-03 16:33:40 DEBUG    Time out! Episode cost 10 steps in route 2.
+2020-05-03 16:33:42 DEBUG    Time out! Episode cost 10 steps in route 3.
+2020-05-03 16:33:44 DEBUG    Time out! Episode cost 10 steps in route 0.
+2020-05-03 16:33:46 DEBUG    Time out! Episode cost 10 steps in route 1.
+2020-05-03 16:33:47 DEBUG    Time out! Episode cost 10 steps in route 2.
+2020-05-03 16:33:49 DEBUG    Time out! Episode cost 10 steps in route 3.
+2020-05-03 16:33:51 DEBUG    Time out! Episode cost 10 steps in route 0.
+2020-05-03 16:33:52 DEBUG    Time out! Episode cost 10 steps in route 1.
+2020-05-03 16:33:54 DEBUG    Time out! Episode cost 10 steps in route 2.
+2020-05-03 16:33:56 DEBUG    Time out! Episode cost 10 steps in route 3.
+2020-05-03 16:33:57 DEBUG    Time out! Episode cost 10 steps in route 0.
+2020-05-03 16:33:59 DEBUG    Time out! Episode cost 10 steps in route 1.
+2020-05-03 16:34:01 DEBUG    Time out! Episode cost 10 steps in route 2.
+2020-05-03 16:34:03 DEBUG    Time out! Episode cost 10 steps in route 3.
+2020-05-03 16:34:04 DEBUG    Time out! Episode cost 10 steps in route 0.
+2020-05-03 16:34:06 DEBUG    Time out! Episode cost 10 steps in route 1.
+2020-05-03 16:34:08 DEBUG    Time out! Episode cost 10 steps in route 2.
+2020-05-03 16:34:09 DEBUG    Time out! Episode cost 10 steps in route 3.
+2020-05-03 16:34:11 DEBUG    Time out! Episode cost 10 steps in route 0.
+2020-05-03 16:34:13 DEBUG    Time out! Episode cost 10 steps in route 1.
+2020-05-03 16:34:15 DEBUG    Time out! Episode cost 10 steps in route 2.
+2020-05-03 16:34:16 DEBUG    Time out! Episode cost 10 steps in route 3.
+2020-05-03 16:36:58 INFO     Env running in port 2000
+2020-05-03 16:36:58 INFO     connecting to Carla server...
+2020-05-03 16:36:59 INFO     Carla server port 2000 connected!
+2020-05-03 16:37:02 DEBUG    Time out! Episode cost 20 steps in route 0.
+2020-05-03 16:37:05 DEBUG    Time out! Episode cost 20 steps in route 1.
+2020-05-03 16:37:09 DEBUG    Time out! Episode cost 20 steps in route 2.
+2020-05-03 16:37:12 DEBUG    Time out! Episode cost 20 steps in route 3.
+2020-05-03 16:37:16 DEBUG    Time out! Episode cost 20 steps in route 0.
+2020-05-03 16:37:20 DEBUG    Time out! Episode cost 20 steps in route 1.
+2020-05-03 16:37:23 DEBUG    Time out! Episode cost 20 steps in route 2.
+2020-05-03 16:37:27 DEBUG    Time out! Episode cost 20 steps in route 3.
+2020-05-03 16:37:30 DEBUG    Time out! Episode cost 20 steps in route 0.
+2020-05-03 16:37:34 DEBUG    Time out! Episode cost 20 steps in route 1.
+2020-05-03 16:37:37 DEBUG    Time out! Episode cost 20 steps in route 2.
+2020-05-03 16:37:41 DEBUG    Time out! Episode cost 20 steps in route 3.
+2020-05-03 16:37:44 DEBUG    Time out! Episode cost 20 steps in route 0.
+2020-05-03 16:37:48 DEBUG    Time out! Episode cost 20 steps in route 1.
+2020-05-03 16:37:51 DEBUG    Time out! Episode cost 20 steps in route 2.
+2020-05-03 16:38:08 INFO     Env running in port 2000
+2020-05-03 16:38:08 INFO     connecting to Carla server...
+2020-05-03 16:38:09 INFO     Carla server port 2000 connected!
+2020-05-03 16:38:10 DEBUG    Right Lane invasion! Episode cost 8 steps in route 2.
+2020-05-03 16:38:14 DEBUG    Time out! Episode cost 20 steps in route 2.
+2020-05-03 16:38:15 DEBUG    Right Lane invasion! Episode cost 6 steps in route 2.
+2020-05-03 16:38:18 DEBUG    Time out! Episode cost 20 steps in route 2.
+2020-05-03 16:38:22 DEBUG    Time out! Episode cost 20 steps in route 2.
+2020-05-03 16:38:25 DEBUG    Time out! Episode cost 20 steps in route 2.
+2020-05-03 16:38:29 DEBUG    Time out! Episode cost 20 steps in route 2.
+2020-05-03 16:38:30 DEBUG    Right Lane invasion! Episode cost 7 steps in route 2.
+2020-05-03 16:38:34 DEBUG    Time out! Episode cost 20 steps in route 2.
+2020-05-03 16:38:37 DEBUG    Time out! Episode cost 20 steps in route 2.
+2020-05-03 16:38:38 DEBUG    Right Lane invasion! Episode cost 8 steps in route 2.
+2020-05-03 16:38:39 DEBUG    Right Lane invasion! Episode cost 6 steps in route 2.
+2020-05-03 16:38:43 DEBUG    Time out! Episode cost 20 steps in route 2.
+2020-05-03 16:38:46 DEBUG    Time out! Episode cost 20 steps in route 2.
