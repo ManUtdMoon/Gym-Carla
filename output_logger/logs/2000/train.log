@@ -115,3 +115,56 @@
 2020-05-02 11:14:58 INFO     Env running in port 2000
 2020-05-02 11:14:58 INFO     connecting to Carla server...
 2020-05-02 11:14:59 INFO     Carla server port 2000 connected!
+2020-05-03 16:58:50 INFO     Env running in port 2000
+2020-05-03 16:58:50 INFO     connecting to Carla server...
+2020-05-03 16:58:51 INFO     Carla server port 2000 connected!
+2020-05-03 16:59:01 DEBUG    Time out! Episode cost 50 steps in route 0.
+2020-05-03 16:59:10 DEBUG    Time out! Episode cost 50 steps in route 0.
+2020-05-03 17:00:00 INFO     Env running in port 2000
+2020-05-03 17:00:00 INFO     connecting to Carla server...
+2020-05-03 17:00:02 INFO     Carla server port 2000 connected!
+2020-05-03 17:00:03 DEBUG    Right Lane invasion! Episode cost 9 steps in route 0.
+2020-05-03 17:00:05 DEBUG    Right Lane invasion! Episode cost 9 steps in route 0.
+2020-05-03 17:00:06 DEBUG    Right Lane invasion! Episode cost 9 steps in route 0.
+2020-05-03 17:00:08 DEBUG    Right Lane invasion! Episode cost 9 steps in route 0.
+2020-05-03 17:00:09 DEBUG    Right Lane invasion! Episode cost 9 steps in route 0.
+2020-05-03 17:00:11 DEBUG    Right Lane invasion! Episode cost 9 steps in route 0.
+2020-05-03 17:00:12 DEBUG    Right Lane invasion! Episode cost 9 steps in route 0.
+2020-05-03 17:01:21 INFO     Env running in port 2000
+2020-05-03 17:01:21 INFO     connecting to Carla server...
+2020-05-03 17:01:22 INFO     Carla server port 2000 connected!
+2020-05-03 17:01:23 DEBUG    Right Lane invasion! Episode cost 9 steps in route 0.
+2020-05-03 17:01:25 DEBUG    Right Lane invasion! Episode cost 9 steps in route 0.
+2020-05-03 17:01:26 DEBUG    Right Lane invasion! Episode cost 9 steps in route 0.
+2020-05-03 17:02:03 INFO     Env running in port 2000
+2020-05-03 17:02:03 INFO     connecting to Carla server...
+2020-05-03 17:02:04 INFO     Carla server port 2000 connected!
+2020-05-03 17:02:06 DEBUG    Right Lane invasion! Episode cost 9 steps in route 0.
+2020-05-03 17:02:07 DEBUG    Right Lane invasion! Episode cost 6 steps in route 0.
+2020-05-03 17:02:08 DEBUG    Right Lane invasion! Episode cost 9 steps in route 0.
+2020-05-03 17:02:10 DEBUG    Right Lane invasion! Episode cost 9 steps in route 0.
+2020-05-03 17:02:11 DEBUG    Right Lane invasion! Episode cost 6 steps in route 0.
+2020-05-03 17:02:12 DEBUG    Right Lane invasion! Episode cost 9 steps in route 0.
+2020-05-03 17:02:13 DEBUG    Right Lane invasion! Episode cost 6 steps in route 0.
+2020-05-03 17:02:23 INFO     Env running in port 2000
+2020-05-03 17:02:23 INFO     connecting to Carla server...
+2020-05-03 17:02:24 INFO     Carla server port 2000 connected!
+2020-05-03 17:02:27 DEBUG    Left Lane invasion! Episode cost 16 steps in route 0.
+2020-05-03 17:02:28 DEBUG    Right Lane invasion! Episode cost 7 steps in route 0.
+2020-05-03 17:02:29 DEBUG    Left Lane invasion! Episode cost 9 steps in route 0.
+2020-05-03 17:02:31 DEBUG    Left Lane invasion! Episode cost 9 steps in route 0.
+2020-05-03 17:02:32 DEBUG    Right Lane invasion! Episode cost 7 steps in route 0.
+2020-05-03 17:02:33 DEBUG    Right Lane invasion! Episode cost 7 steps in route 0.
+2020-05-03 17:02:35 DEBUG    Left Lane invasion! Episode cost 9 steps in route 0.
+2020-05-03 17:02:37 DEBUG    Right Lane invasion! Episode cost 12 steps in route 0.
+2020-05-03 17:02:40 DEBUG    Right Lane invasion! Episode cost 18 steps in route 0.
+2020-05-03 17:02:49 DEBUG    Time out! Episode cost 50 steps in route 0.
+2020-05-03 17:03:09 INFO     Env running in port 2000
+2020-05-03 17:03:09 INFO     connecting to Carla server...
+2020-05-03 17:03:10 INFO     Carla server port 2000 connected!
+2020-05-03 17:03:12 DEBUG    Left Lane invasion! Episode cost 9 steps in route 0.
+2020-05-03 17:03:13 DEBUG    Left Lane invasion! Episode cost 9 steps in route 0.
+2020-05-03 17:03:15 DEBUG    Left Lane invasion! Episode cost 9 steps in route 0.
+2020-05-03 17:03:16 DEBUG    Left Lane invasion! Episode cost 9 steps in route 0.
+2020-05-03 17:03:19 DEBUG    Left Lane invasion! Episode cost 15 steps in route 0.
+2020-05-03 17:03:20 DEBUG    Left Lane invasion! Episode cost 9 steps in route 0.

@@ -20,9 +20,9 @@ def main():
         'dt': 0.025,  # time interval between two frames
         'ego_vehicle_filter': 'vehicle.lincoln*',  # filter for defining ego vehicle
         'port': 2000,  # connection port
-        'task_mode': 'Straight',  # mode of the task, [random, roundabout (only for Town03)]
-        'code_mode': 'test',
-        'max_time_episode': 5000,  # maximum timesteps per episode
+        'task_mode': 'Long',  # mode of the task, [random, roundabout (only for Town03)]
+        'code_mode': 'train',
+        'max_time_episode': 50,  # maximum timesteps per episode
         'desired_speed': 10,  # desired speed (m/s)
         'max_ego_spawn_times': 100,  # maximum times to spawn ego vehicle
     }
@@ -38,6 +38,9 @@ def main():
     # print(env.map.get_waypoint(location=end))
     obs, info = env.reset()
     print(obs.shape)
+    print(info[0:4])
+    print(info[4:7])
+    print('---------------------------')
 
     tic = time.time()
     done = False
@@ -48,12 +51,10 @@ def main():
 
     while not (done or env.isTimeOut):
         tac = time.time()
-        if tac - tic <= 10:
-            action = [0.0, 0]
-            # throttle = np.random.rand(1) - 0.5
-            # action = np.concatenate((throttle, np.random.uniform(low=-0.3, high=0.3, size=(1,))), axis=0)
-        else:
-            action = [0.0, 0]
+
+        action = [0.0, -0.05]
+        # throttle = np.random.rand(1) - 0.5
+        # action = np.concatenate((throttle, np.random.uniform(low=-0.3, high=0.3, size=(1,))), axis=0)
 
         cv2.imshow('img', obs.squeeze())
         cv2.waitKey(1)
@@ -64,7 +65,9 @@ def main():
         # print('--------------------------------')
 
         obs, r, done, info = env.step(action)
-        print(info)
+        print(info[0:4])
+        print(info[4:7])
+        print('---------------------------')
         count += 1
         # print('delta', info['delta_yaw_t'], 'angular_speed', info['dyaw_dt_t'])
         # print(info['delta_yaw_t'], info['dyaw_dt_t'])
