@@ -124,7 +124,7 @@ class CarlaEnv(gym.Env):
                     self.route_id = np.random.randint(2, 4)
                 elif self.task_mode == 'Long':
                     if self.code_mode == 'train':
-                        self.route_id = 0#np.random.randint(0, 4)
+                        self.route_id = np.random.randint(0, 4)
                     elif self.code_mode == 'test':
                         self.route_id = self.route_deterministic_id
                         self.route_deterministic_id = (self.route_deterministic_id + 1) % 4
