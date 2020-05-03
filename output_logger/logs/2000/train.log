@@ -33,3 +33,11 @@
 2020-05-03 15:04:05 INFO     Env running in port 2000
 2020-05-03 15:04:05 INFO     connecting to Carla server...
 2020-05-03 15:04:06 INFO     Carla server port 2000 connected!
+2020-05-03 15:30:02 INFO     Env running in port 2000
+2020-05-03 15:30:02 INFO     connecting to Carla server...
+2020-05-03 15:30:03 INFO     Carla server port 2000 connected!
+2020-05-03 15:30:04 DEBUG    Collision happened! Episode cost 7 steps in route 0.
+2020-05-03 15:30:16 INFO     Env running in port 2000
+2020-05-03 15:30:16 INFO     connecting to Carla server...
+2020-05-03 15:30:17 INFO     Carla server port 2000 connected!
+2020-05-03 15:30:18 DEBUG    Right Lane invasion! Episode cost 8 steps in route 0.

@@ -358,14 +358,14 @@ class CarlaEnv(gym.Env):
         # If collides
         if len(self.collision_hist) > 0:
             # print("Collision happened! Episode Done.")
-            self.logger.debug('Collision happened! Episode cost %d steps.' % (self.time_step))
+            self.logger.debug('Collision happened! Episode cost %d steps in route %d.' % (self.time_step, self.route_id))
             self.isCollided = True
             return True
 
         # If reach maximum timestep
         if self.time_step >= self.max_time_episode:
             # print("Time out! Episode Done.")
-            self.logger.debug('Time out! Episode cost %d steps.' % (self.time_step))
+            self.logger.debug('Time out! Episode cost %d steps in route %d.' % (self.time_step, self.route_id))
             self.isTimeOut = True
             # return True
 
@@ -374,9 +374,9 @@ class CarlaEnv(gym.Env):
         if abs(self.state_info['lateral_dist_t']) > 1.0:
             # print("lane invasion happened! Episode Done.")
             if self.state_info['lateral_dist_t'] > 0:
-                self.logger.debug('Left Lane invasion! Episode cost %d steps.' % (self.time_step))
+                self.logger.debug('Left Lane invasion! Episode cost %d steps in route %d.' % (self.time_step, self.route_id))
             else:
-                self.logger.debug('Right Lane invasion! Episode cost %d steps.' % (self.time_step))
+                self.logger.debug('Right Lane invasion! Episode cost %d steps in route %d.' % (self.time_step, self.route_id))
             self.isOutOfLane = True
             return True
 
@@ -384,11 +384,11 @@ class CarlaEnv(gym.Env):
         velocity = self.ego.get_velocity()
         v_norm = np.linalg.norm(np.array((velocity.x, velocity.y)))
         if v_norm < 4:
-            self.logger.debug('Speed too slow! Episode cost %d steps.' % (self.time_step))
+            self.logger.debug('Speed too slow! Episode cost %d steps in route %d.' % (self.time_step, self.route_id))
             self.isSpecialSpeed = True
             return True
         elif v_norm > (1.5*self.desired_speed):
-            self.logger.debug('Speed too fast! Episode cost %d steps.' % (self.time_step))
+            self.logger.debug('Speed too fast! Episode cost %d steps in route %d.' % (self.time_step, self.route_id))
             self.isSpecialSpeed = True
             return True
 
