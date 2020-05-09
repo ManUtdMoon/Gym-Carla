@@ -127,9 +127,9 @@ class CarlaEnv(gym.Env):
                     self.route_id = np.random.randint(2, 4)
                 elif self.task_mode == 'Long':
                     if self.code_mode == 'train':
-                        self.route_id = 2 # np.random.randint(0, 4)
+                        self.route_id = np.random.randint(0, 4)
                     elif self.code_mode == 'test':
-                        self.route_id = self.route_deterministic_id
+                        self.route_id = self.route_deterministic_id + 4
                         self.route_deterministic_id = (self.route_deterministic_id + 1) % 4
                 self.start = self.starts[self.route_id]
                 self.dest = self.dests[self.route_id]
@@ -549,7 +549,8 @@ class CarlaEnv(gym.Env):
                 elif self.task_mode == 'Curve':
                     self.world = self.client.load_world('Town01')
                 elif self.task_mode == 'Long':
-                    self.world = self.client.load_world('Town01')
+                    # self.world = self.client.load_world('Town01')
+                    self.world = self.client.load_world('Town02')
                 self.map = self.world.get_map()
 
                 # Set weather

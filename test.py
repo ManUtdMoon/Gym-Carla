@@ -21,18 +21,19 @@ def main():
         'ego_vehicle_filter': 'vehicle.lincoln*',  # filter for defining ego vehicle
         'port': 2000,  # connection port
         'task_mode': 'Long',  # mode of the task, [random, roundabout (only for Town03)]
-        'code_mode': 'train',
-        'max_time_episode': 20,  # maximum timesteps per episode
+        'code_mode': 'test',
+        'max_time_episode': 500,  # maximum timesteps per episode
         'desired_speed': 10,  # desired speed (m/s)
         'max_ego_spawn_times': 100,  # maximum times to spawn ego vehicle
     }
 
     # Set gym-carla environment
     env = gym.make('carla-v0', params=params)
-    # start0 = carla.Location(x=env.starts[2][0], y=env.starts[2][1], z=env.starts[2][2])
-    # end0 = carla.Location(x=env.dests[2][0], y=env.dests[2][1], z=env.dests[2][2])
-    # env.world.debug.draw_point(start0)
-    # env.world.debug.draw_point(end0)
+    index = 7
+    start0 = carla.Location(x=env.starts[index][0], y=env.starts[index][1], z=env.starts[index][2])
+    end0 = carla.Location(x=env.dests[index][0], y=env.dests[index][1], z=env.dests[index][2])
+    env.world.debug.draw_point(start0)
+    env.world.debug.draw_point(end0, color=carla.Color(0,0,255))
 
     # start1 = carla.Location(x=env.starts[3][0], y=env.starts[3][1], z=env.starts[3][2])
     # end1 = carla.Location(x=env.dests[3][0], y=env.dests[3][1], z=env.dests[3][2])
