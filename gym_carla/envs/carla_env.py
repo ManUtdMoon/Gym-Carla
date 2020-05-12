@@ -125,11 +125,11 @@ class CarlaEnv(gym.Env):
                     self.route_id = 0
                 elif self.task_mode == 'Curve':
                     self.route_id = np.random.randint(2, 4)
-                elif self.task_mode == 'Long':
+                elif self.task_mode == 'Long' or self.task_mode == 'Lane':
                     if self.code_mode == 'train':
                         self.route_id = np.random.randint(0, 4)
                     elif self.code_mode == 'test':
-                        self.route_id = self.route_deterministic_id + 4
+                        self.route_id = self.route_deterministic_id
                         self.route_deterministic_id = (self.route_deterministic_id + 1) % 4
                 self.start = self.starts[self.route_id]
                 self.dest = self.dests[self.route_id]
@@ -360,7 +360,7 @@ class CarlaEnv(gym.Env):
         # dest = self.dest
         # if np.sqrt((ego_x-dest[0])**2+(ego_y-dest[1])**2) < 2.0:
         #     # print("Get destination! Episode Done.")
-        #     self.logger.debug('Get destination! Episode Done.')
+        #     self.logger.debug('Get destination! Episode cost %d steps in route %d.' % (self.time_step, self.route_id))
         #     self.isSuccess = True
         #     return True
 
@@ -549,8 +549,11 @@ class CarlaEnv(gym.Env):
                 elif self.task_mode == 'Curve':
                     self.world = self.client.load_world('Town01')
                 elif self.task_mode == 'Long':
+                    self.world = self.client.load_world('Town01')
+                    # self.world = self.client.load_world('Town02')
+                elif self.task_mode == 'Lane':
                     # self.world = self.client.load_world('Town01')
-                    self.world = self.client.load_world('Town02')
+                    self.world = self.client.load_world('Town05')
                 self.map = self.world.get_map()
 
                 # Set weather
@@ -589,7 +592,7 @@ class CarlaEnv(gym.Env):
             transform = self.map.get_waypoint(location=start_location).next(ratio)[0].transform
             transform.location.z = start[2]
 
-        elif self.task_mode == 'Long':
+        elif self.task_mode == 'Long' or self.task_mode == 'Lane':
             start_location = carla.Location(x=start[0], y=start[1], z=0.22)
             ratio = float(np.random.rand() * 60)
 

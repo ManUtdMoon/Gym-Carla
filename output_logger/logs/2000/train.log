@@ -386,3 +386,250 @@
 2020-05-09 10:34:22 DEBUG    Left Lane invasion! Episode cost 62 steps in route 5.
 2020-05-09 10:34:44 DEBUG    Right Lane invasion! Episode cost 121 steps in route 6.
 2020-05-09 10:34:52 DEBUG    Left Lane invasion! Episode cost 43 steps in route 7.
+2020-05-12 19:46:14 INFO     Env running in port 2000
+2020-05-12 19:46:14 INFO     connecting to Carla server...
+2020-05-12 19:46:14 ERROR    Fail to connect to carla-server...sleeping for 2
+2020-05-12 19:46:16 INFO     connecting to Carla server...
+2020-05-12 19:46:16 ERROR    Fail to connect to carla-server...sleeping for 2
+2020-05-12 19:46:18 INFO     connecting to Carla server...
+2020-05-12 19:46:18 ERROR    Fail to connect to carla-server...sleeping for 2
+2020-05-12 19:46:20 INFO     connecting to Carla server...
+2020-05-12 19:46:20 ERROR    Fail to connect to carla-server...sleeping for 2
+2020-05-12 19:46:22 INFO     connecting to Carla server...
+2020-05-12 19:46:22 ERROR    Fail to connect to carla-server...sleeping for 2
+2020-05-12 19:46:24 INFO     connecting to Carla server...
+2020-05-12 19:46:24 ERROR    Fail to connect to carla-server...sleeping for 2
+2020-05-12 19:46:26 INFO     connecting to Carla server...
+2020-05-12 19:46:26 ERROR    Fail to connect to carla-server...sleeping for 2
+2020-05-12 19:46:28 INFO     connecting to Carla server...
+2020-05-12 19:46:28 ERROR    Fail to connect to carla-server...sleeping for 2
+2020-05-12 19:46:30 INFO     connecting to Carla server...
+2020-05-12 19:46:30 ERROR    Fail to connect to carla-server...sleeping for 2
+2020-05-12 19:46:32 INFO     connecting to Carla server...
+2020-05-12 19:46:32 ERROR    Fail to connect to carla-server...sleeping for 2
+2020-05-12 19:46:34 INFO     connecting to Carla server...
+2020-05-12 19:46:34 ERROR    Fail to connect to carla-server...sleeping for 2
+2020-05-12 19:46:36 INFO     connecting to Carla server...
+2020-05-12 19:46:36 ERROR    Fail to connect to carla-server...sleeping for 2
+2020-05-12 19:46:38 INFO     connecting to Carla server...
+2020-05-12 19:46:38 ERROR    Fail to connect to carla-server...sleeping for 2
+2020-05-12 19:46:40 INFO     connecting to Carla server...
+2020-05-12 19:46:40 ERROR    Fail to connect to carla-server...sleeping for 2
+2020-05-12 19:46:42 INFO     connecting to Carla server...
+2020-05-12 19:46:42 ERROR    Fail to connect to carla-server...sleeping for 2
+2020-05-12 19:46:44 INFO     connecting to Carla server...
+2020-05-12 19:46:44 ERROR    Fail to connect to carla-server...sleeping for 2
+2020-05-12 19:46:46 INFO     connecting to Carla server...
+2020-05-12 19:46:46 ERROR    Fail to connect to carla-server...sleeping for 2
+2020-05-12 19:46:48 INFO     connecting to Carla server...
+2020-05-12 19:46:48 ERROR    Fail to connect to carla-server...sleeping for 2
+2020-05-12 19:46:50 INFO     connecting to Carla server...
+2020-05-12 19:46:50 ERROR    Fail to connect to carla-server...sleeping for 2
+2020-05-12 19:46:52 INFO     connecting to Carla server...
+2020-05-12 19:46:52 ERROR    Fail to connect to carla-server...sleeping for 2
+2020-05-12 19:46:54 INFO     connecting to Carla server...
+2020-05-12 19:46:54 ERROR    Fail to connect to carla-server...sleeping for 2
+2020-05-12 19:46:56 INFO     connecting to Carla server...
+2020-05-12 19:46:56 ERROR    Fail to connect to carla-server...sleeping for 2
+2020-05-12 19:46:58 INFO     connecting to Carla server...
+2020-05-12 19:46:58 ERROR    Fail to connect to carla-server...sleeping for 2
+2020-05-12 19:47:00 INFO     connecting to Carla server...
+2020-05-12 19:47:00 ERROR    Fail to connect to carla-server...sleeping for 2
+2020-05-12 19:47:02 INFO     connecting to Carla server...
+2020-05-12 19:47:02 ERROR    Fail to connect to carla-server...sleeping for 2
+2020-05-12 19:47:04 INFO     connecting to Carla server...
+2020-05-12 19:47:04 ERROR    Fail to connect to carla-server...sleeping for 2
+2020-05-12 19:47:20 INFO     Env running in port 2000
+2020-05-12 19:47:20 INFO     connecting to Carla server...
+2020-05-12 19:47:22 INFO     Carla server port 2000 connected!
+2020-05-12 19:47:22 ERROR    Env reset() error
+2020-05-12 19:47:24 INFO     connecting to Carla server...
+2020-05-12 19:47:25 INFO     Carla server port 2000 connected!
+2020-05-12 19:47:26 ERROR    Env reset() error
+2020-05-12 19:47:28 INFO     connecting to Carla server...
+2020-05-12 19:47:29 INFO     Carla server port 2000 connected!
+2020-05-12 19:47:29 ERROR    Env reset() error
+2020-05-12 19:47:31 INFO     connecting to Carla server...
+2020-05-12 19:47:32 INFO     Carla server port 2000 connected!
+2020-05-12 19:47:36 INFO     Env running in port 2000
+2020-05-12 19:47:36 INFO     connecting to Carla server...
+2020-05-12 19:47:37 INFO     Carla server port 2000 connected!
+2020-05-12 19:53:54 INFO     Env running in port 2000
+2020-05-12 19:53:54 INFO     connecting to Carla server...
+2020-05-12 19:53:56 INFO     Carla server port 2000 connected!
+2020-05-12 20:05:45 INFO     Env running in port 2000
+2020-05-12 20:05:45 INFO     connecting to Carla server...
+2020-05-12 20:05:50 INFO     Carla server port 2000 connected!
+2020-05-12 20:06:11 INFO     Env running in port 2000
+2020-05-12 20:06:11 INFO     connecting to Carla server...
+2020-05-12 20:06:16 INFO     Carla server port 2000 connected!
+2020-05-12 20:06:17 ERROR    Env reset() error
+2020-05-12 20:06:19 INFO     connecting to Carla server...
+2020-05-12 20:06:22 INFO     Env running in port 2000
+2020-05-12 20:06:22 INFO     connecting to Carla server...
+2020-05-12 20:06:23 INFO     Carla server port 2000 connected!
+2020-05-12 20:07:57 INFO     Env running in port 2000
+2020-05-12 20:07:57 INFO     connecting to Carla server...
+2020-05-12 20:07:59 INFO     Carla server port 2000 connected!
+2020-05-12 20:15:20 INFO     Env running in port 2000
+2020-05-12 20:15:20 INFO     connecting to Carla server...
+2020-05-12 20:15:27 INFO     Carla server port 2000 connected!
+2020-05-12 20:18:36 INFO     Env running in port 2000
+2020-05-12 20:18:36 INFO     connecting to Carla server...
+2020-05-12 20:18:40 INFO     Env running in port 2000
+2020-05-12 20:18:40 INFO     connecting to Carla server...
+2020-05-12 20:18:46 INFO     Carla server port 2000 connected!
+2020-05-12 20:48:02 INFO     Env running in port 2000
+2020-05-12 20:48:02 INFO     connecting to Carla server...
+2020-05-12 20:48:03 INFO     Carla server port 2000 connected!
+2020-05-12 20:48:40 INFO     Env running in port 2000
+2020-05-12 20:48:40 INFO     connecting to Carla server...
+2020-05-12 20:48:42 INFO     Carla server port 2000 connected!
+2020-05-12 20:49:56 INFO     Env running in port 2000
+2020-05-12 20:49:56 INFO     connecting to Carla server...
+2020-05-12 20:49:57 INFO     Carla server port 2000 connected!
+2020-05-12 20:50:44 INFO     Env running in port 2000
+2020-05-12 20:50:44 INFO     connecting to Carla server...
+2020-05-12 20:50:45 INFO     Carla server port 2000 connected!
+2020-05-12 20:51:05 INFO     Env running in port 2000
+2020-05-12 20:51:05 INFO     connecting to Carla server...
+2020-05-12 20:51:06 INFO     Carla server port 2000 connected!
+2020-05-12 20:52:47 INFO     Env running in port 2000
+2020-05-12 20:52:47 INFO     connecting to Carla server...
+2020-05-12 20:52:48 INFO     Carla server port 2000 connected!
+2020-05-12 20:53:14 INFO     Env running in port 2000
+2020-05-12 20:53:14 INFO     connecting to Carla server...
+2020-05-12 20:53:15 INFO     Carla server port 2000 connected!
+2020-05-12 20:54:00 INFO     Env running in port 2000
+2020-05-12 20:54:00 INFO     connecting to Carla server...
+2020-05-12 20:54:01 INFO     Carla server port 2000 connected!
+2020-05-12 20:54:01 ERROR    Env reset() error
+2020-05-12 20:54:20 INFO     Env running in port 2000
+2020-05-12 20:54:20 INFO     connecting to Carla server...
+2020-05-12 20:54:21 INFO     Carla server port 2000 connected!
+2020-05-12 20:59:33 INFO     Env running in port 2000
+2020-05-12 20:59:33 INFO     connecting to Carla server...
+2020-05-12 20:59:34 INFO     Carla server port 2000 connected!
+2020-05-12 21:00:39 INFO     Env running in port 2000
+2020-05-12 21:00:39 INFO     connecting to Carla server...
+2020-05-12 21:00:41 INFO     Carla server port 2000 connected!
+2020-05-12 21:04:03 INFO     Env running in port 2000
+2020-05-12 21:04:03 INFO     connecting to Carla server...
+2020-05-12 21:04:04 INFO     Carla server port 2000 connected!
+2020-05-12 21:08:26 INFO     Env running in port 2000
+2020-05-12 21:08:26 INFO     connecting to Carla server...
+2020-05-12 21:08:27 INFO     Carla server port 2000 connected!
+2020-05-12 21:09:32 INFO     Env running in port 2000
+2020-05-12 21:09:32 INFO     connecting to Carla server...
+2020-05-12 21:09:33 INFO     Carla server port 2000 connected!
+2020-05-12 21:10:05 INFO     Env running in port 2000
+2020-05-12 21:10:05 INFO     connecting to Carla server...
+2020-05-12 21:10:06 INFO     Carla server port 2000 connected!
+2020-05-12 21:14:16 INFO     Env running in port 2000
+2020-05-12 21:14:16 INFO     connecting to Carla server...
+2020-05-12 21:14:17 INFO     Carla server port 2000 connected!
+2020-05-12 21:16:18 INFO     Env running in port 2000
+2020-05-12 21:16:18 INFO     connecting to Carla server...
+2020-05-12 21:16:19 INFO     Carla server port 2000 connected!
+2020-05-12 21:18:45 INFO     Env running in port 2000
+2020-05-12 21:18:45 INFO     connecting to Carla server...
+2020-05-12 21:18:46 INFO     Carla server port 2000 connected!
+2020-05-12 21:21:18 INFO     Env running in port 2000
+2020-05-12 21:21:18 INFO     connecting to Carla server...
+2020-05-12 21:21:19 INFO     Carla server port 2000 connected!
+2020-05-12 21:21:19 ERROR    Env reset() error
+2020-05-12 21:21:21 INFO     connecting to Carla server...
+2020-05-12 21:21:22 INFO     Carla server port 2000 connected!
+2020-05-12 21:21:22 ERROR    Env reset() error
+2020-05-12 21:21:24 INFO     connecting to Carla server...
+2020-05-12 21:21:25 INFO     Carla server port 2000 connected!
+2020-05-12 21:21:25 ERROR    Env reset() error
+2020-05-12 21:21:27 INFO     connecting to Carla server...
+2020-05-12 21:21:28 INFO     Carla server port 2000 connected!
+2020-05-12 21:21:28 ERROR    Env reset() error
+2020-05-12 21:22:20 INFO     Env running in port 2000
+2020-05-12 21:22:20 INFO     connecting to Carla server...
+2020-05-12 21:22:21 INFO     Carla server port 2000 connected!
+2020-05-12 21:22:31 DEBUG    Left Lane invasion! Episode cost 60 steps in route 0.
+2020-05-12 21:22:42 DEBUG    Left Lane invasion! Episode cost 58 steps in route 1.
+2020-05-12 21:22:44 DEBUG    Right Lane invasion! Episode cost 16 steps in route 2.
+2020-05-12 21:22:47 DEBUG    Right Lane invasion! Episode cost 16 steps in route 3.
+2020-05-12 21:22:58 DEBUG    Left Lane invasion! Episode cost 60 steps in route 0.
+2020-05-12 21:23:08 DEBUG    Left Lane invasion! Episode cost 58 steps in route 1.
+2020-05-12 21:23:11 DEBUG    Right Lane invasion! Episode cost 16 steps in route 2.
+2020-05-12 21:23:14 DEBUG    Right Lane invasion! Episode cost 16 steps in route 3.
+2020-05-12 21:23:24 DEBUG    Left Lane invasion! Episode cost 60 steps in route 0.
+2020-05-12 21:23:35 DEBUG    Left Lane invasion! Episode cost 58 steps in route 1.
+2020-05-12 21:23:37 DEBUG    Right Lane invasion! Episode cost 16 steps in route 2.
+2020-05-12 21:23:40 DEBUG    Right Lane invasion! Episode cost 16 steps in route 3.
+2020-05-12 21:23:51 DEBUG    Left Lane invasion! Episode cost 60 steps in route 0.
+2020-05-12 21:24:00 ERROR    Env step() error
+2020-05-12 21:24:06 INFO     Env running in port 2000
+2020-05-12 21:24:06 INFO     connecting to Carla server...
+2020-05-12 21:25:01 INFO     Env running in port 2000
+2020-05-12 21:25:01 INFO     connecting to Carla server...
+2020-05-12 21:25:02 INFO     Carla server port 2000 connected!
+2020-05-12 21:25:03 DEBUG    Right Lane invasion! Episode cost 7 steps in route 3.
+2020-05-12 21:25:04 DEBUG    Right Lane invasion! Episode cost 8 steps in route 0.
+2020-05-12 21:25:06 DEBUG    Right Lane invasion! Episode cost 7 steps in route 2.
+2020-05-12 21:25:07 DEBUG    Right Lane invasion! Episode cost 7 steps in route 2.
+2020-05-12 21:25:08 DEBUG    Right Lane invasion! Episode cost 7 steps in route 2.
+2020-05-12 21:25:09 DEBUG    Right Lane invasion! Episode cost 8 steps in route 1.
+2020-05-12 21:25:10 DEBUG    Right Lane invasion! Episode cost 7 steps in route 2.
+2020-05-12 21:25:12 DEBUG    Right Lane invasion! Episode cost 7 steps in route 2.
+2020-05-12 21:25:13 DEBUG    Right Lane invasion! Episode cost 7 steps in route 3.
+2020-05-12 21:25:14 DEBUG    Right Lane invasion! Episode cost 8 steps in route 0.
+2020-05-12 21:25:15 DEBUG    Right Lane invasion! Episode cost 8 steps in route 1.
+2020-05-12 21:25:17 DEBUG    Right Lane invasion! Episode cost 8 steps in route 1.
+2020-05-12 21:25:18 DEBUG    Right Lane invasion! Episode cost 8 steps in route 0.
+2020-05-12 21:25:19 DEBUG    Right Lane invasion! Episode cost 8 steps in route 0.
+2020-05-12 21:25:21 DEBUG    Right Lane invasion! Episode cost 8 steps in route 0.
+2020-05-12 21:25:22 DEBUG    Right Lane invasion! Episode cost 8 steps in route 0.
+2020-05-12 21:25:23 DEBUG    Right Lane invasion! Episode cost 7 steps in route 2.
+2020-05-12 21:25:25 DEBUG    Right Lane invasion! Episode cost 8 steps in route 0.
+2020-05-12 21:25:26 DEBUG    Right Lane invasion! Episode cost 7 steps in route 2.
+2020-05-12 21:25:27 DEBUG    Right Lane invasion! Episode cost 7 steps in route 3.
+2020-05-12 21:25:28 DEBUG    Right Lane invasion! Episode cost 7 steps in route 2.
+2020-05-12 21:25:29 DEBUG    Right Lane invasion! Episode cost 7 steps in route 3.
+2020-05-12 21:25:30 DEBUG    Right Lane invasion! Episode cost 7 steps in route 2.
+2020-05-12 21:25:45 INFO     Env running in port 2000
+2020-05-12 21:25:45 INFO     connecting to Carla server...
+2020-05-12 21:25:46 INFO     Carla server port 2000 connected!
+2020-05-12 21:25:47 DEBUG    Right Lane invasion! Episode cost 7 steps in route 3.
+2020-05-12 21:25:48 DEBUG    Right Lane invasion! Episode cost 7 steps in route 2.
+2020-05-12 21:25:50 DEBUG    Right Lane invasion! Episode cost 7 steps in route 2.
+2020-05-12 21:25:51 DEBUG    Right Lane invasion! Episode cost 8 steps in route 1.
+2020-05-12 21:25:52 DEBUG    Right Lane invasion! Episode cost 8 steps in route 0.
+2020-05-12 21:25:53 DEBUG    Right Lane invasion! Episode cost 7 steps in route 3.
+2020-05-12 21:25:55 DEBUG    Right Lane invasion! Episode cost 7 steps in route 3.
+2020-05-12 21:25:56 DEBUG    Right Lane invasion! Episode cost 7 steps in route 2.
+2020-05-12 21:25:57 DEBUG    Right Lane invasion! Episode cost 7 steps in route 3.
+2020-05-12 21:25:58 DEBUG    Right Lane invasion! Episode cost 8 steps in route 1.
+2020-05-12 21:25:59 DEBUG    Right Lane invasion! Episode cost 7 steps in route 3.
+2020-05-12 21:26:01 DEBUG    Right Lane invasion! Episode cost 8 steps in route 0.
+2020-05-12 21:26:02 DEBUG    Right Lane invasion! Episode cost 8 steps in route 0.
+2020-05-12 21:26:03 DEBUG    Right Lane invasion! Episode cost 7 steps in route 3.
+2020-05-12 21:26:05 DEBUG    Right Lane invasion! Episode cost 8 steps in route 0.
+2020-05-12 21:26:06 DEBUG    Right Lane invasion! Episode cost 8 steps in route 1.
+2020-05-12 21:26:07 DEBUG    Right Lane invasion! Episode cost 8 steps in route 0.
+2020-05-12 21:26:09 DEBUG    Right Lane invasion! Episode cost 8 steps in route 1.
+2020-05-12 21:26:10 DEBUG    Right Lane invasion! Episode cost 7 steps in route 3.
+2020-05-12 21:26:11 DEBUG    Right Lane invasion! Episode cost 8 steps in route 0.
+2020-05-12 21:26:13 DEBUG    Right Lane invasion! Episode cost 8 steps in route 0.
+2020-05-12 21:26:14 DEBUG    Right Lane invasion! Episode cost 8 steps in route 0.
+2020-05-12 21:26:15 DEBUG    Right Lane invasion! Episode cost 7 steps in route 2.
+2020-05-12 21:26:17 DEBUG    Right Lane invasion! Episode cost 8 steps in route 1.
+2020-05-12 21:26:18 DEBUG    Right Lane invasion! Episode cost 7 steps in route 3.
+2020-05-12 21:26:19 DEBUG    Right Lane invasion! Episode cost 7 steps in route 2.
+2020-05-12 21:26:20 DEBUG    Right Lane invasion! Episode cost 7 steps in route 2.
+2020-05-12 21:26:21 DEBUG    Right Lane invasion! Episode cost 7 steps in route 2.
+2020-05-12 21:26:22 DEBUG    Right Lane invasion! Episode cost 7 steps in route 3.
+2020-05-12 21:26:24 DEBUG    Right Lane invasion! Episode cost 8 steps in route 0.
+2020-05-12 21:26:25 DEBUG    Right Lane invasion! Episode cost 8 steps in route 1.
+2020-05-12 21:26:27 DEBUG    Right Lane invasion! Episode cost 8 steps in route 0.
+2020-05-12 21:26:28 DEBUG    Right Lane invasion! Episode cost 7 steps in route 2.
+2020-05-12 21:26:29 DEBUG    Right Lane invasion! Episode cost 8 steps in route 1.
+2020-05-12 21:26:30 DEBUG    Right Lane invasion! Episode cost 7 steps in route 2.
+2020-05-12 21:26:31 DEBUG    Right Lane invasion! Episode cost 7 steps in route 3.
+2020-05-12 21:26:33 DEBUG    Right Lane invasion! Episode cost 8 steps in route 0.
+2020-05-12 21:26:34 DEBUG    Right Lane invasion! Episode cost 8 steps in route 0.
